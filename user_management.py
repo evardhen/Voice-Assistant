@@ -2,7 +2,7 @@ from tinydb import TinyDB, Query
 
 class UserManagement():
     def __init__(self, init_dummies = False):
-        self.db = TinyDB('./users.sjon')
+        self.db = TinyDB('./users.json')
         self.speaker_table = self.db.table('speakers')
     
     def add_speaker(self):
