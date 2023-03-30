@@ -25,6 +25,10 @@ class Voice():
         p = Process(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
         p.start()
         self.process = p
+    
+    def is_busy(self):
+        if self.process:
+            return self.process.is_alive()
 
     def set_voice(self, voiceId):
         self.voiceId = voiceId

@@ -6,16 +6,33 @@ import sys
 import pyaudio
 import pvporcupine
 import struct
-import os
-
 from vosk import Model, SpkModel, KaldiRecognizer
 import json
-import text2numde
+import os
 import sys
 from user_management import UserManagement
 import numpy as np
+from chatbot import Chat, register_call
+from datetime import datetime
 
 CONFIG_FILE = 'config.yml'
+
+@register_call("default")
+def default_handler(sessionId = "general", dummy = 0):
+    return "Ich konnte dich nicht verstehen."
+
+@register_call("time")
+def time(sessionId = "general", dummy = 0):
+    now = datetime.now()
+    return "Es ist " + str(now.hour) + " Uhr und " + str(now.minute) + " Minuten."
+
+@register_call("stop")
+def stop(sessionId = "general", dummy = 0):
+    if va.tts.is_busy():
+        va.tts.stop()
+        return "Ich höre auf zu reden."
+    return "Ich sage doch garnichts du Lurch."
+
 
 class VoiceAssistant():
 
@@ -23,9 +40,11 @@ class VoiceAssistant():
         global CONFIG_FILE
         default_language = 'de'
         default_wakeword = 'terminator'
-        device_index = 1 # select correct microphone
+        device_index = 2 # select correct microphone
         self.tts = Voice()
         self.is_listening = False
+        dialog_path = './dialogs.template'
+        
         # open config file:
         config = self.open_yml_file()
 
@@ -40,8 +59,19 @@ class VoiceAssistant():
 
         # allow certain users to be recognized
         self.user_mgmt(config)
+        
+        # process intents with chatbotai
+        self.chatbot(dialog_path)
 
         logger.debug("Initialisierung abgeschlossen.")
+        
+    def chatbot(self, dialog_path):
+        if os.path.isfile(dialog_path):
+            self.chat = Chat(dialog_path)
+            logger.debug("Chatbot wurde aus {} gestartet.", dialog_path)
+        else:
+            logger.error('Dialogpfad zum Chatbot nicht gefunden in Funktion chatbot().')
+            sys.exit(1)
 
     def user_mgmt(self, config):
         self.user_mgmt = UserManagement()
@@ -55,7 +85,7 @@ class VoiceAssistant():
             ny = np.array(inputSpeaker)
             cosDist = 1 - np.dot(nx, ny) / (np.linalg.norm(nx) * np.linalg.norm(ny))
             logger.debug("Cosine similarity: {}", cosDist)
-            if(cosDist < bestCosDIst and cosDist < 0.3): # always between 0 and 1
+            if(cosDist < bestCosDIst and cosDist < 0.7): # always between 0 and 1
                 bestCosDIst = cosDist
                 bestSpeaker = speaker.get('name')
         return bestSpeaker
@@ -119,15 +149,13 @@ class VoiceAssistant():
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
                         logger.info('Result: {}', result)
-                        speakerId = result['spk']
-                        speaker = self.detect_speaker(speakerId)
-                        if (speaker == None and self.allow_known_speaker):
-                            logger.info("Deine Stimme ist nicht authentifiziert.")
-                        else:
-                            if speaker:
-                                logger.info("Sprecher ist {}", speaker)
-                            sentence = result['text']
-                            logger.info("Ich habe '{}' verstanden.", sentence)
+
+                        sentence = result['text']
+                        output = self.chat.respond(sentence)
+                        logger.info("Ich habe '{}' verstanden.", sentence)
+                        logger.info("Chatbot Ausgabe: '{}'.", output)
+                        self.tts.say(output)
+                        
                         self.is_listening = False
 
 
