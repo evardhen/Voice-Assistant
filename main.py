@@ -14,24 +14,30 @@ from user_management import UserManagement
 import numpy as np
 from chatbot import Chat, register_call
 from datetime import datetime
+import io
+import pytz
+from snips_nlu import SnipsNLUEngine
+from snips_nlu.default_configs import CONFIG_DE
+from snips_nlu.dataset import Dataset
 
 CONFIG_FILE = 'config.yml'
 
-@register_call("default")
-def default_handler(sessionId = "general", dummy = 0):
-    return "Ich konnte dich nicht verstehen."
-
-@register_call("time")
-def time(sessionId = "general", dummy = 0):
+def getTime(place):
+    country_timezone_map = {
+        "deutschland": pytz.timezone('Europe/Berlin'),
+        "england": pytz.timezone('Europe/London'),
+    }
     now = datetime.now()
+    timezone = country_timezone_map.get(place.lower())
+    if timezone:
+        now = datetime.now(timezone)
+        return "Die Uhrzeit in " + place.capitalize() + " ist " + str(now.hour) + " Uhr und " + str(now.minute) + " Minuten."
     return "Es ist " + str(now.hour) + " Uhr und " + str(now.minute) + " Minuten."
 
-@register_call("stop")
-def stop(sessionId = "general", dummy = 0):
+def stop():
     if va.tts.is_busy():
         va.tts.stop()
-        return "Ich höre auf zu reden."
-    return "Ich sage doch garnichts du Lurch."
+    
 
 
 class VoiceAssistant():
@@ -43,7 +49,7 @@ class VoiceAssistant():
         device_index = 2 # select correct microphone
         self.tts = Voice()
         self.is_listening = False
-        dialog_path = './dialogs.template'
+        self.nlu_engine = None
         
         # open config file:
         config = self.open_yml_file()
@@ -61,17 +67,18 @@ class VoiceAssistant():
         self.user_mgmt(config)
         
         # process intents with chatbotai
-        self.chatbot(dialog_path)
+        self.chatbot()
 
         logger.debug("Initialisierung abgeschlossen.")
         
-    def chatbot(self, dialog_path):
-        if os.path.isfile(dialog_path):
-            self.chat = Chat(dialog_path)
-            logger.debug("Chatbot wurde aus {} gestartet.", dialog_path)
-        else:
-            logger.error('Dialogpfad zum Chatbot nicht gefunden in Funktion chatbot().')
+    def chatbot(self):
+        dataset = Dataset.from_yaml_files("de", ['./dialog_datasets/time_dataset.yaml', './dialog_datasets/stop_dataset.yaml'])
+        nlu_engine = SnipsNLUEngine(config=CONFIG_DE)
+        self.nlu_engine = nlu_engine.fit(dataset)
+        if not self.nlu_engine:
+            logger.error("Konnte Dialog Engine nicht starten.")
             sys.exit(1)
+        logger.debug("Dialog Metadaten: {}", self.nlu_engine.dataset_metadata)
 
     def user_mgmt(self, config):
         self.user_mgmt = UserManagement()
@@ -148,13 +155,20 @@ class VoiceAssistant():
                 if self.is_listening:
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
-                        logger.info('Result: {}', result)
+                        # logger.info('Result: {}', result)
 
                         sentence = result['text']
-                        output = self.chat.respond(sentence)
+                        parser = self.nlu_engine.parse(sentence)
+                        logger.debug("NLU Objekt: {}", parser)
+                        output = ""
+                        if parser["intent"]["intentName"] == "getTime":
+                            if len(parser["slots"]) == 0:
+                                output = getTime("deutschland")
+                            elif parser["slots"][0]["entity"] == "country":
+                                output = getTime(parser["slots"][0]["rawValue"])
+                        
                         logger.info("Ich habe '{}' verstanden.", sentence)
                         logger.info("Chatbot Ausgabe: '{}'.", output)
-                        self.tts.say(output)
                         
                         self.is_listening = False
 
