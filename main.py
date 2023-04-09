@@ -17,10 +17,10 @@ from datetime import datetime
 import io
 import pytz
 from snips_nlu import SnipsNLUEngine
-from snips_nlu.default_configs import CONFIG_DE
+from snips_nlu.default_self.configs import CONFIG_DE
 from snips_nlu.dataset import Dataset
 
-CONFIG_FILE = 'config.yml'
+CONFIG_FILE = 'self.config.yml'
 
 def getTime(place):
     country_timezone_map = {
@@ -50,21 +50,22 @@ class VoiceAssistant():
         self.tts = Voice()
         self.is_listening = False
         self.nlu_engine = None
+        self.config = None
         
-        # open config file:
-        config = self.open_yml_file()
+        # open self.config file:
+        self.open_yml_file()
 
         # set language and voice:
-        self.set_language_and_voice(default_language, config)
+        self.set_language_and_voice(default_language)
 
         # wake word detection:
-        self.wakeword_detection(default_wakeword, device_index, config)
+        self.wakeword_detection(default_wakeword, device_index)
 
         # speech to text model
         self.speech_to_text()
 
         # allow certain users to be recognized
-        self.user_mgmt(config)
+        self.user_mgmt()
         
         # process intents with chatbotai
         self.chatbot()
@@ -73,16 +74,16 @@ class VoiceAssistant():
         
     def chatbot(self):
         dataset = Dataset.from_yaml_files("de", ['./dialog_datasets/time_dataset.yaml', './dialog_datasets/stop_dataset.yaml'])
-        nlu_engine = SnipsNLUEngine(config=CONFIG_DE)
+        nlu_engine = SnipsNLUEngine(CONFIG_DE)
         self.nlu_engine = nlu_engine.fit(dataset)
         if not self.nlu_engine:
             logger.error("Konnte Dialog Engine nicht starten.")
             sys.exit(1)
         logger.debug("Dialog Metadaten: {}", self.nlu_engine.dataset_metadata)
 
-    def user_mgmt(self, config):
+    def user_mgmt(self):
         self.user_mgmt = UserManagement()
-        self.allow_known_speaker = config['assistant']['allow_only_known_speaker']
+        self.allow_known_speaker = self.config['assistant']['allow_only_known_speaker']
 
     def detect_speaker(self, inputSpeaker):
         bestSpeaker = None
@@ -110,15 +111,14 @@ class VoiceAssistant():
     def open_yml_file(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as file:
             try:
-                config = yaml.load(file, Loader=yaml.FullLoader)
+                self.config = yaml.load(file, Loader=yaml.FullLoader)
                 logger.debug('YAML Datei erfolgreich geladen.')
-                return config
             except yaml.YAMLError as exc:
                 logger.error(exc)
                 sys.exit(1)
 
-    def set_language_and_voice(self, default_language, config):
-        language = config['assistant']['language']
+    def set_language_and_voice(self, default_language):
+        language = self.config['assistant']['language']
         if not language:
             language = default_language
         logger.info('Verwende Sprache {}.', language)
@@ -128,9 +128,9 @@ class VoiceAssistant():
           self.tts.set_voice(voices[0])
           logger.info('Stimme {}', voices[0])
 
-    def wakeword_detection(self, default_wakeword, device_index, config):
+    def wakeword_detection(self, default_wakeword, device_index):
         logger.debug("Starte Wakeword Erkennung.")
-        self.wakewords = config['assistant']['wakewords']
+        self.wakewords = self.config['assistant']['wakewords']
         if not  self.wakewords:
              self.wakewords = [default_wakeword]
         logger.debug('Wakewords sind {}', ', '.join( self.wakewords))
@@ -169,7 +169,7 @@ class VoiceAssistant():
                         
                         logger.info("Ich habe '{}' verstanden.", sentence)
                         logger.info("Chatbot Ausgabe: '{}'.", output)
-                        
+                        self.tts.say(output)
                         self.is_listening = False
 
 

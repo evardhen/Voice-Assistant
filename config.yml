@@ -2,3 +2,6 @@ assistant:
     language: "de"
     wakewords: ['terminator', 'grapefruit']
     allow_only_known_speaker: 'True'
+defaults:
+    de:
+        no_intend_recognized: ["Ich habe dich nicht  verstanden.", "Kannst du das nochmal wiederholen?"]
