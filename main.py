@@ -19,8 +19,10 @@ import pytz
 from snips_nlu import SnipsNLUEngine
 from snips_nlu.default_self.configs import CONFIG_DE
 from snips_nlu.dataset import Dataset
+import intent_management
 
 CONFIG_FILE = 'self.config.yml'
+SNIPS_NLU_DATASETS = ['./intents/time_dataset.yaml', './intents/stop_dataset.yaml']
 
 def getTime(place):
     country_timezone_map = {
@@ -37,7 +39,7 @@ def getTime(place):
 def stop():
     if va.tts.is_busy():
         va.tts.stop()
-    
+
 
 
 class VoiceAssistant():
@@ -51,7 +53,7 @@ class VoiceAssistant():
         self.is_listening = False
         self.nlu_engine = None
         self.config = None
-        
+
         # open self.config file:
         self.open_yml_file()
 
@@ -66,14 +68,14 @@ class VoiceAssistant():
 
         # allow certain users to be recognized
         self.user_mgmt()
-        
+
         # process intents with chatbotai
         self.chatbot()
 
         logger.debug("Initialisierung abgeschlossen.")
-        
+
     def chatbot(self):
-        dataset = Dataset.from_yaml_files("de", ['./dialog_datasets/time_dataset.yaml', './dialog_datasets/stop_dataset.yaml'])
+        dataset = Dataset.from_yaml_files("de", SNIPS_NLU_DATASETS)
         nlu_engine = SnipsNLUEngine(CONFIG_DE)
         self.nlu_engine = nlu_engine.fit(dataset)
         if not self.nlu_engine:
@@ -160,13 +162,10 @@ class VoiceAssistant():
                         sentence = result['text']
                         parser = self.nlu_engine.parse(sentence)
                         logger.debug("NLU Objekt: {}", parser)
-                        output = ""
-                        if parser["intent"]["intentName"] == "getTime":
-                            if len(parser["slots"]) == 0:
-                                output = getTime("deutschland")
-                            elif parser["slots"][0]["entity"] == "country":
-                                output = getTime(parser["slots"][0]["rawValue"])
-                        
+
+                        intents = intent_management()
+                        output = intents.process()
+
                         logger.info("Ich habe '{}' verstanden.", sentence)
                         logger.info("Chatbot Ausgabe: '{}'.", output)
                         self.tts.say(output)

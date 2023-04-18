@@ -13,21 +13,30 @@ import sys
 
 
 class IntentManagement():
-    
+
     def __init__(self):
         self.intent_count = 0
         self.function_folders = [os.path.abspath(name) for name in glob.glob("./intents/functions/*/")]
         self.dynamic_intents = []
         self.import_functions()
-    
-    
-    def process(self, text, speaker):
-        pass
-    
+
+
+    def process(self, parser, va):
+        output = ""
+        if parser["intent"]["intentName"] == "gettime":
+            if len(parser["slots"]) == 0:
+                getTime = self.dynamic_intents["gettime"]()
+                output = getTime(va)
+            elif parser["slots"][0]["entity"] == "country":
+                output = getTime(va, parser["slots"][0]["rawValue"])
+        elif parser["intent"]["intentName"] == "interruptspeech":
+            pass
+        return output
+
     def import_functions(self):
         # load files from intents/functions/ folder
         for folder in self.function_folders:
-            logger.debug("Scuhe nach Funktionen in {}", folder)
+            logger.debug("Suche nach Funktionen in {}", folder)
             req_file = os.path.join(folder, 'requirements.txt')
             if os.path.exists(req_file):
                 self.install_requirements(req_file)
@@ -40,7 +49,7 @@ class IntentManagement():
                 globals()[Path(folder).name] = importlib.import_module(name)
                 self.dynamic_intents.append(Path(folder).name)
                 self.intent_count +=1
-                
+
         # load files from intents/snips_nlu/ folder
         snips_files = glob.glob(os.path.join("intents/snips_nlu", ".yml"))
         try:
@@ -50,10 +59,10 @@ class IntentManagement():
         except Exception as e:
             logger.error("Snips Engine konnte nicht geladen werden.")
             sys.exit(1)
-                
-                
-                
-    
+
+
+
+
     def install_requirements(self, packages):
         with open(packages, 'r') as file:
             for line in file:
@@ -61,8 +70,6 @@ class IntentManagement():
                     pip.main(['install', line.strip()])
                 except Exception as e:
                     logger.error("Fehler beim installieren der requirements in install_requirements(), Paket: {}", line.strip())
-    
+
     def get_intent_count(self):
         return self.intent_count
-    
-    

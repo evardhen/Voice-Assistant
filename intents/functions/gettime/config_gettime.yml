@@ -11,6 +11,6 @@ intent:
         timezones:
             Europe/Berlin: {"deutschland", "germany"}
             Europe/Paris: {"frankreich", "france"}
-            Europe/Berlin: {"großbritannien", "england", "freat britain"}
+            Europe/Berlin: {"großbritannien", "england", "great britain"}
             America/New_York: {"amerika", "america"}
             Asia/Shanghai: {"china"}
