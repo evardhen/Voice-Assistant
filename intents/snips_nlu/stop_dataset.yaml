@@ -1,8 +1,9 @@
 # Stop intent
 ---
 type: intent
-name: stop
+name: interrupt
 utterances:
+    - stopp
     - stop
     - halt
     - sei still

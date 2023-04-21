@@ -8,38 +8,13 @@ import pvporcupine
 import struct
 from vosk import Model, SpkModel, KaldiRecognizer
 import json
-import os
 import sys
 from user_management import UserManagement
 import numpy as np
-from chatbot import Chat, register_call
-from datetime import datetime
-import io
-import pytz
-from snips_nlu import SnipsNLUEngine
-from snips_nlu.default_self.configs import CONFIG_DE
-from snips_nlu.dataset import Dataset
-import intent_management
+from intent_management import IntentManagement
 
-CONFIG_FILE = 'self.config.yml'
-SNIPS_NLU_DATASETS = ['./intents/time_dataset.yaml', './intents/stop_dataset.yaml']
 
-def getTime(place):
-    country_timezone_map = {
-        "deutschland": pytz.timezone('Europe/Berlin'),
-        "england": pytz.timezone('Europe/London'),
-    }
-    now = datetime.now()
-    timezone = country_timezone_map.get(place.lower())
-    if timezone:
-        now = datetime.now(timezone)
-        return "Die Uhrzeit in " + place.capitalize() + " ist " + str(now.hour) + " Uhr und " + str(now.minute) + " Minuten."
-    return "Es ist " + str(now.hour) + " Uhr und " + str(now.minute) + " Minuten."
-
-def stop():
-    if va.tts.is_busy():
-        va.tts.stop()
-
+CONFIG_FILE = 'config.yml'
 
 
 class VoiceAssistant():
@@ -51,7 +26,6 @@ class VoiceAssistant():
         device_index = 2 # select correct microphone
         self.tts = Voice()
         self.is_listening = False
-        self.nlu_engine = None
         self.config = None
 
         # open self.config file:
@@ -69,19 +43,8 @@ class VoiceAssistant():
         # allow certain users to be recognized
         self.user_mgmt()
 
-        # process intents with chatbotai
-        self.chatbot()
-
         logger.debug("Initialisierung abgeschlossen.")
 
-    def chatbot(self):
-        dataset = Dataset.from_yaml_files("de", SNIPS_NLU_DATASETS)
-        nlu_engine = SnipsNLUEngine(CONFIG_DE)
-        self.nlu_engine = nlu_engine.fit(dataset)
-        if not self.nlu_engine:
-            logger.error("Konnte Dialog Engine nicht starten.")
-            sys.exit(1)
-        logger.debug("Dialog Metadaten: {}", self.nlu_engine.dataset_metadata)
 
     def user_mgmt(self):
         self.user_mgmt = UserManagement()
@@ -106,7 +69,7 @@ class VoiceAssistant():
         s2t_model = Model('./vosk-model-de-0.21/vosk-model-de-0.21') # path to model
         logger.debug("Lade Speaker Modell...")
         speaker_model = SpkModel('./vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
-        logger.debug("Modelle erfolgreich geladen.")
+        logger.debug("Speaker Modelle erfolgreich geladen.")
         self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
 
 
@@ -158,12 +121,9 @@ class VoiceAssistant():
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
                         # logger.info('Result: {}', result)
-
                         sentence = result['text']
-                        parser = self.nlu_engine.parse(sentence)
-                        logger.debug("NLU Objekt: {}", parser)
 
-                        intents = intent_management()
+                        intents = IntentManagement(sentence, va, self.config['assistant']['language'])
                         output = intents.process()
 
                         logger.info("Ich habe '{}' verstanden.", sentence)

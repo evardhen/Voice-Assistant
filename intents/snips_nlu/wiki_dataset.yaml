@@ -1,0 +1,35 @@
+---
+type: entity
+name: query
+automatically_extensible: true
+use_synonyms: true
+matching_strictness: 0.0
+values:
+    - Barack Obama
+    - ChatGPT
+    - Rosen
+    - Interpolation
+    - Michael Jackson
+    - Schwarzes Loch
+    - Pudding
+    - Backstreet Boys
+
+---
+type: intent
+name: wiki
+utterances:
+    - Kennst du [request:query](Barack Obama)
+    - Weißt du etwas über [request:query](Interpolation)
+    - Wer ist [request:query](Michael Jackson)
+    - Wer sind die [request:query](Backstreet Boys)
+    - Was ist [request:query](Pudding)
+    - Was ist ein [request:query](Schwarzes Loch)
+    - Was sind [request:query](Rosen)
+    - Kennst du
+    - Weißt du etwas über
+    - Wer ist
+    - Wer sind die
+    - Was ist
+    - Was ist ein
+    - Was sind
+
