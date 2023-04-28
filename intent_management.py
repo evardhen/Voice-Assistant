@@ -46,6 +46,27 @@ class IntentManagement():
             arguments["language"] = self.language
             for slot in self.parser["slots"]:
                 arguments[slot["slotName"]] = slot["value"]["value"]
+        elif intentName == "set_volume":
+            arguments["voice"] = self.va.tts
+            arguments["sentence"] = self.sentence
+            arguments["language"] = self.language
+            for slot in self.parser["slots"]:
+                arguments[slot["slotName"]] = slot["value"]["value"]
+        elif intentName == "get_volume":
+            arguments["voice"] = self.va.tts
+            arguments["language"] = self.language
+        elif intentName == "set_voiceSpeed":
+            arguments["voice"] = self.va.tts
+            arguments["sentence"] = self.sentence
+            arguments["language"] = self.language
+            for slot in self.parser["slots"]:
+                arguments[slot["slotName"]] = slot["value"]["value"]
+        elif intentName == "get_voiceSpeed":
+            arguments["voice"] = self.va.tts
+            arguments["language"] = self.language
+        else:
+            return ("{} ist nicht in set_dynamic_arguments() zur Auswahl.", intentName)
+
         return arguments
     
     def process(self):
@@ -71,6 +92,7 @@ class IntentManagement():
         # detects intents from training files
         # load files from intents/snips_nlu/ folder
         try:
+            self.sentence = sentence
             snips_files = glob.glob(os.path.join("./intents/snips_nlu", '*.yaml'))
             dataset = Dataset.from_yaml_files(language, snips_files)
             nlu_engine = SnipsNLUEngine(CONFIG_DE)

@@ -151,10 +151,7 @@ class VoiceAssistant():
                                 mixer.music.set_volume(0.1)
                             self.tts.say(output)
                             callback(True, self.config['assistant']['language'])
-                            
-                                
-
-
+                                                     
         except KeyboardInterrupt:
             logger.info("Prozess durch Keyboard unterbrochen.")
 
@@ -166,6 +163,7 @@ class VoiceAssistant():
                 self.audio_stream.close()
             if self.pyAudio is not None:
                 self.pyAudio.terminate()
+
 
 if __name__ == '__main__':
     multiprocessing.set_start_method("spawn")

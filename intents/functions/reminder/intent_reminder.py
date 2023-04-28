@@ -65,30 +65,30 @@ def reminder(language = "de", time = None, reminder_to=None, reminder_infinitive
     
     if datetime.now().date() == parsed_time.date():
         if reminder_to:
-            reminder_same_day_to = random.choice(config_reminder['intent']['reminder'][language]['reminder_same_day_to'])
+            message = random.choice(config_reminder['intent']['reminder'][language]['reminder_same_day_to'])
             reminder_table.insert({'time':time, 'kind':'to', 'msg':reminder_to})
-            return reminder_same_day_to.format(hours, minutes, reminder_to)
+            return message.format(hours, minutes, reminder_to)
         if reminder_infinitive:
-            reminder_same_day_inf = random.choice(config_reminder['intent']['reminder'][language]['reminder_same_day_infinitive'])
+            message = random.choice(config_reminder['intent']['reminder'][language]['reminder_same_day_infinitive'])
             reminder_table.insert({'time':time, 'kind':'inf', 'msg':reminder_infinitive})
-            return reminder_same_day_inf.format(hours, minutes, reminder_infinitive)
+            return message.format(hours, minutes, reminder_infinitive)
         
         # Es wurde nicht angegeben, an was erinnert werden soll
-        reminder_same_day_no_action = random.choice(config_reminder['intent']['reminder'][language]['reminder_same_day_no_action'])
+        message = random.choice(config_reminder['intent']['reminder'][language]['reminder_same_day_no_action'])
         reminder_table.insert({'time':time, 'kind':'none', 'msg':''})
-        return reminder_same_day_no_action.format(hours, minutes)
+        return message.format(hours, minutes)
     
     # Datum ist nicht heute
     if reminder_to:
-        reminder_to = random.choice(config_reminder['intent']['reminder'][language]['reminder_to'])
+        message = random.choice(config_reminder['intent']['reminder'][language]['reminder_to'])
         reminder_table.insert({'time':time, 'kind':'to', 'msg':reminder_to})
-        return reminder_to.format(day, month, year, hours, minutes, reminder_to)
+        return message.format(day, month, year, hours, minutes, reminder_to)
     if reminder_infinitive:
-        reminder_inf = random.choice(config_reminder['intent']['reminder'][language]['reminder_infinitive'])
+        message = random.choice(config_reminder['intent']['reminder'][language]['reminder_infinitive'])
         reminder_table.insert({'time':time, 'kind':'inf', 'msg':reminder_infinitive})
-        return reminder_inf.format(day, month, year, hours, minutes, reminder_infinitive)
+        return message.format(day, month, year, hours, minutes, reminder_infinitive)
     
     # Es wurde nicht angegeben, an was erinnert werden soll
-    reminder_no_action = random.choice(config_reminder['intent']['reminder'][language]['reminder_no_action'])
+    message = random.choice(config_reminder['intent']['reminder'][language]['reminder_no_action'])
     reminder_table.insert({'time':time, 'kind':'none', 'msg':''})
-    return reminder_no_action.format(day, month, year, hours, minutes)
+    return message.format(day, month, year, hours, minutes)

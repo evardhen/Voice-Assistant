@@ -1,0 +1,23 @@
+intent:
+    set_volume:
+        de:
+            increase_volume_no_message: [""]
+            decrease_volume_no_message: [""]
+            increase_volume: ["Lautstärke wird erhöht."]
+            increase_volume_by_value: ["Lautstärke wird auf {} erhöht."]
+            current_volume: ["Die Lautstärke beträgt {}."]
+            decrease_volume: ["Lautstärke wird verringert."]
+            decrease_volume_by_value: ["Lautstärke wird auf {} verringert."]
+            same_volume: ["Lautstärke bereits auf {} eingestellt."]
+            exception: ["Lautstärke konnte nicht angepasst werden"]
+        en:
+            increase_volume_no_message: [""]
+            decrease_volume_no_message: [""]
+            increase_volume: ["Volume is increased."]
+            increase_volume_by_value: ["Volume is increased to {}."]
+            current_volume: ["The current volume is {}."]
+            decrease_volume: ["Volume is decreased."]
+            decrease_volume_by_value: ["Volume is decreased to {}."]
+            same_volume: ["Volume already set on {}."]
+            exception: ["Volume could not be modified."]
+            

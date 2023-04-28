@@ -1,0 +1,20 @@
+---
+type: intent 
+name: set_volume
+slots:
+    - name: volume
+      entity: snips/number
+utterances:
+    - Lauter
+    - Rede lauter
+    - Leiser
+    - Rede leiser
+    - Verringere die Lautstärke auf [volume:snips/number](0.5)
+    - Verringere die Lautstärke auf [volume:snips/number](1.0)
+    - Erhöhe die Lautstärke auf [volume:snips/number](0.5)
+    - Erhöhe die Lautstärke auf [volume:snips/number](1.0)
+    - Setze die Lautstärke auf [volume:snips/number](1.0)
+    - Setze die Lautstärke auf [volume:snips/number](0.5)
+
+
+

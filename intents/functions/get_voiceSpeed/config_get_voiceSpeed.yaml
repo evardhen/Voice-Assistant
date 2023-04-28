@@ -1,0 +1,6 @@
+intent:
+    get_voiceSpeed:
+        de:
+            current_voiceSpeed: ["Geschwindigkeit ist auf {} eingestellt."]
+        en:
+            current_volume: ["Voice Speed is set to {}."]

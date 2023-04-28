@@ -1,0 +1,10 @@
+---
+type: intent 
+name: get_volume
+utterances:
+    - Welche Lautstärke ist eingestellt
+    - Gib mir deine Lautstärke
+    - Wie laut bist du
+    - Wie ist die Lautstärke
+    - Was für eine Lautstärke ist eingestellt
+    - Mit welcher Lautstärke sprichst du

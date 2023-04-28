@@ -1,0 +1,11 @@
+---
+type: intent 
+name: get_voiceSpeed
+utterances:
+    - Welche Geschwindikeit ist eingestellt
+    - Gib mir deine Geschwindikeit
+    - Gib mir die Geschwindikeit
+    - Wie ist die Geschwindikeit
+    - Was für eine Geschwindikeit ist eingestellt
+    - Mit welcher Geschwindigkeit sprichst du
+    - Geschwindigkeit
