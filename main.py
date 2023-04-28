@@ -12,8 +12,10 @@ import sys
 from user_management import UserManagement
 import numpy as np
 from intent_management import IntentManagement
+from pygame import mixer
+import os
 
-
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
 
 
@@ -21,10 +23,8 @@ class VoiceAssistant():
 
     def __init__(self):
         global CONFIG_FILE
-        default_language = 'de'
         default_wakeword = 'terminator'
         device_index = 2 # select correct microphone
-        self.tts = Voice()
         self.is_listening = False
         self.config = None
 
@@ -32,7 +32,7 @@ class VoiceAssistant():
         self.open_yml_file()
 
         # set language and voice:
-        self.set_language_and_voice(default_language)
+        self.set_language_and_voice()
 
         # wake word detection:
         self.wakeword_detection(default_wakeword, device_index)
@@ -42,6 +42,10 @@ class VoiceAssistant():
 
         # allow certain users to be recognized
         self.user_mgmt()
+        
+        # for reminder intent
+        self.intents = IntentManagement(self)
+        self.callbacks = self.intents.register_callbacks()
 
         logger.debug("Initialisierung abgeschlossen.")
 
@@ -82,12 +86,16 @@ class VoiceAssistant():
                 logger.error(exc)
                 sys.exit(1)
 
-    def set_language_and_voice(self, default_language):
+    def set_language_and_voice(self, default_language = "de"):
+        mixer.init()
+        mixer.music.set_volume(self.config["assistant"]["volume"])
+        
         language = self.config['assistant']['language']
         if not language:
             language = default_language
         logger.info('Verwende Sprache {}.', language)
-
+        
+        self.tts = Voice(self.config['assistant']['voiceSpeed'], self.config['assistant']['volume'])
         voices = self.tts.get_voice_id(language)
         if len(voices) > 0:
           self.tts.set_voice(voices[0])
@@ -118,18 +126,33 @@ class VoiceAssistant():
                     logger.info("Wakeword '{}' erkannt. Wie kann ich dir helfen?",  self.wakewords[keyword_index])
                     self.is_listening = True
                 if self.is_listening:
+                    if mixer.get_busy():
+                        mixer.music.set_volume(0.1)
+                    
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
                         # logger.info('Result: {}', result)
                         sentence = result['text']
 
-                        intents = IntentManagement(sentence, va, self.config['assistant']['language'])
-                        output = intents.process()
+                        self.intents.load_snips_model(sentence, self.config['assistant']['language'])
+                        output = self.intents.process()
 
                         logger.info("Ich habe '{}' verstanden.", sentence)
                         logger.info("Chatbot Ausgabe: '{}'.", output)
                         self.tts.say(output)
                         self.is_listening = False
+                else:
+                    mixer.music.set_volume(self.config['assistant']['volume'])
+                    
+                    for callback in self.callbacks:
+                        output = callback(False, self.config['assistant']['language'])
+                        if output and not self.tts.is_busy():
+                            if mixer.music.get_busy():
+                                mixer.music.set_volume(0.1)
+                            self.tts.say(output)
+                            callback(True, self.config['assistant']['language'])
+                            
+                                
 
 
         except KeyboardInterrupt:

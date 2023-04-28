@@ -3,7 +3,7 @@ type: entity
 name: query
 automatically_extensible: true
 use_synonyms: true
-matching_strictness: 0.0
+matching_strictness: 0.5
 values:
     - Barack Obama
     - ChatGPT
@@ -13,23 +13,65 @@ values:
     - Schwarzes Loch
     - Pudding
     - Backstreet Boys
+    - Peter Fox
+    - Alexander von Humboldt
+    - die Ärzte
+    - Schellack
+    - Mol
+    - Polynom
+    - Webseite
+    - Schrippen
+    - Schuhe
+    - Justin Bieber
+    - Donald Trump
+    - Manuel Neuer
+    - Deutschland
+    - England
+    - USA
+    - Berlin
+    - Washington
+    - Blinding Lights
+    - Perfekt
+    - Künstliche Intelligenz
 
 ---
 type: intent
 name: wiki
 utterances:
-    - Kennst du [request:query](Barack Obama)
-    - Weißt du etwas über [request:query](Interpolation)
+    - Wer ist [request:query](Michael Jackson)
+    - Wer ist [request:query](Peter Fox)
+    - Wer ist [request:query](Alexander von Humboldt)
     - Wer ist [request:query](Michael Jackson)
     - Wer sind die [request:query](Backstreet Boys)
+    - Wer sind [request:query](die Ärzte)
+    - Wer sind [request:query](die Ärzte)
     - Was ist [request:query](Pudding)
+    - Was ist [request:query](Schellack)
+    - Was ist [request:query](Mol)
     - Was ist ein [request:query](Schwarzes Loch)
+    - Was ist ein [request:query](Polynom)
+    - Was ist eine [request:query](Webseite)
     - Was sind [request:query](Rosen)
-    - Kennst du
-    - Weißt du etwas über
-    - Wer ist
-    - Wer sind die
-    - Was ist
-    - Was ist ein
-    - Was sind
+    - Was sind [request:query](Schrippen)
+    - Was sind [request:query](Schuhe)
+    - Kennst du [request:query](Justin Bieber)
+    - Kennst du [request:query](Donald Trump)
+    - Kennst du [request:query](Manuel Neuer)
+    - Kennst du [request:query](Barack Obama)
+    - Kennst du [request:query](Deutschland)
+    - Kennst du [request:query](England)
+    - Kennst du [request:query](USA)
+    - Kennst du [request:query](Berlin)
+    - Kennst du [request:query](Washington)
+    - Kennst du [request:query](Blinding Lights)
+    - Kennst du [request:query](Perfekt)
+    - Weißt du etwas über [request:query](Blinding Lights)
+    - Weißt du etwas über [request:query](Perfekt)
+    - Weißt du etwas über [request:query](Interpolation)
+    - Weißt du etwas über [request:query](Interpolation)
+    - Weißt du etwas über [request:query](Rosen)
+    - Weißt du etwas über [request:query](Künstliche Intelligenz)
+
+
+
 

@@ -1,7 +1,6 @@
 from loguru import logger
 import pyttsx3
 from multiprocessing import Process
-import time
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -13,11 +12,11 @@ def __speak__(text, voiceId, speed, vol):
 
 class Voice():
 
-    def __init__(self):
+    def __init__(self, voiceSpeed = 150, volume = 0.5):
         self.process = None
         self.voiceId = None
-        self.voiceSpeed = 150
-        self.volume = 0.5
+        self.voiceSpeed = voiceSpeed
+        self.volume = volume
 
     def say(self, text):
         if self.process:
