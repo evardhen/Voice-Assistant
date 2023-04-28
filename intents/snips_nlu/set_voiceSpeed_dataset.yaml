@@ -9,6 +9,8 @@ utterances:
     - Langsamer
     - Rede schneller
     - Rede langsamer
+    - Verringere die Geschwindigkeit
+    - Erhöhe die Geschwindigkeit
     - Verringere die Geschwindigkeit auf [voiceSpeed:snips/number](0.5)
     - Verringere die Geschwindigkeit auf [voiceSpeed:snips/number](1.0)
     - Erhöhe die Geschwindigkeit auf [voiceSpeed:snips/number](0.5)

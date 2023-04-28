@@ -1,11 +1,22 @@
 ---
+type: entity
+name: speed
+automatically_extensible: false
+use_synonyms: false
+matching_strictness: 0.9
+values:
+    - geschwindigkeit
+
+---
 type: intent 
 name: get_voiceSpeed
+slots:
+    - name: speed
+      entity: speed
 utterances:
-    - Welche Geschwindikeit ist eingestellt
-    - Gib mir deine Geschwindikeit
-    - Gib mir die Geschwindikeit
-    - Wie ist die Geschwindikeit
-    - Was für eine Geschwindikeit ist eingestellt
-    - Mit welcher Geschwindigkeit sprichst du
-    - Geschwindigkeit
+    - Welche [speed:speed](geschwindigkeit) ist eingestellt
+    - Gib mir deine [speed:speed](geschwindigkeit)
+    - Gib mir die [speed:speed](geschwindigkeit)
+    - Wie ist die [speed:speed](geschwindigkeit)
+    - Was für eine [speed:speed](geschwindigkeit) ist eingestellt
+    - Mit welcher [speed:speed](geschwindigkeit) sprichst du
