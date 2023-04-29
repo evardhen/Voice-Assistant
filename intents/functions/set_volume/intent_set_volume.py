@@ -13,6 +13,8 @@ except Exception as e:
 
 def set_volume(voice, sentence, language = "de", volume = None):
     if volume:
+        if volume < 0 or volume > 10:
+            return random.choice(config_volume["intent"]["set_volume"][language]["invalid_volume"])
         old_volume = voice.get_volume()
         voice.set_volume(volume)
         logger.debug("Lautstärke auf {} gesetzt.", voice.get_volume())

@@ -10,6 +10,7 @@ intent:
             decrease_volume_by_value: ["Lautstärke wird auf {} verringert."]
             same_volume: ["Lautstärke bereits auf {} eingestellt."]
             exception: ["Lautstärke konnte nicht angepasst werden"]
+            invalid_volume: ["Bitte setze die Lautstärke auf einen Wert zwischen 0 und 10."]
         en:
             increase_volume_no_message: [""]
             decrease_volume_no_message: [""]
@@ -20,4 +21,6 @@ intent:
             decrease_volume_by_value: ["Volume is decreased to {}."]
             same_volume: ["Volume already set on {}."]
             exception: ["Volume could not be modified."]
+            invalid_volume: ["Please set the volume to a value betweeen 0 and 10."]
+
             

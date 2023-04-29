@@ -27,6 +27,7 @@ class VoiceAssistant():
         device_index = 2 # select correct microphone
         self.is_listening = False
         self.config = None
+        self.mute_volume = 0.1
 
         # open self.config file:
         self.open_yml_file()
@@ -127,7 +128,7 @@ class VoiceAssistant():
                     self.is_listening = True
                 if self.is_listening:
                     if mixer.get_busy():
-                        mixer.music.set_volume(0.1)
+                        mixer.music.set_volume(self.mute_volume)
                     
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
@@ -148,7 +149,7 @@ class VoiceAssistant():
                         output = callback(False, self.config['assistant']['language'])
                         if output and not self.tts.is_busy():
                             if mixer.music.get_busy():
-                                mixer.music.set_volume(0.1)
+                                mixer.music.set_volume(self.mute_volume)
                             self.tts.say(output)
                             callback(True, self.config['assistant']['language'])
                                                      
@@ -156,6 +157,14 @@ class VoiceAssistant():
             logger.info("Prozess durch Keyboard unterbrochen.")
 
         finally:
+            try:
+                self.config['assistant']['volume'] = self.tts.volume
+                self.config['assistant']['voiceSpeed'] = self.tts.voiceSpeed
+                with open(CONFIG_FILE, "w") as file:
+                    yaml.dump(self.config, file, default_flow_style=False, sort_keys=False)
+            except Exception as e:
+                logger.error("Konnte config.yaml nicht lesem: {}", e)
+
             logger.debug('Beende offene Pakete...')
             if self.porc:
                 self.porc.delete()

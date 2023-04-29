@@ -12,7 +12,6 @@ def __speak__(text, voiceId, speed, vol):
     engine.runAndWait()
 
 class Voice():
-
     def __init__(self, voiceSpeed = 150, volume = 0.5):
         self.process = None
         self.voiceId = None

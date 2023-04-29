@@ -10,6 +10,8 @@ intent:
             decrease_voiceSpeed_by_value: ["Geschwindigkeit wird auf {} verringert."]
             same_voiceSpeed: ["Geschwindigkeit bereits auf {} eingestellt."]
             exception: ["Geschwindigkeit konnte nicht angepasst werden"]
+            invalid_voiceSpeed: ["Bitte setze die Geschwindigkeit auf einen Wert zwischen 0 und 300."]
+
         en:
             increase_voiceSpeed_no_message: [""]
             decrease_voiceSpeed_no_message: [""]
@@ -20,3 +22,4 @@ intent:
             decrease_voiceSpeed_by_value: ["Voice speed is decreased to {}."]
             same_voiceSpeed: ["Voice speed already set on {}."]
             exception: ["Voice speed could not be modified."]
+            invalid_voiceSpeed: ["Please set the voice speed to a value betweeen 0 and 300."]

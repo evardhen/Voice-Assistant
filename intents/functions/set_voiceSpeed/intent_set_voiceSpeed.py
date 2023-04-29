@@ -13,6 +13,8 @@ except Exception as e:
 
 def set_voiceSpeed(voice, sentence, language = "de", voiceSpeed = None):
     if voiceSpeed:
+        if voiceSpeed < 0 or voiceSpeed > 300:
+            return random.choice(config_voiceSpeed["intent"]["set_voiceSpeed"][language]["invalid_voiceSpeed"])
         old_voiceSpeed = voice.get_voiceSpeed()
         voice.set_voiceSpeed(voiceSpeed)
         logger.debug("Geschwindigkeit auf {} gesetzt.", voice.get_voiceSpeed())
