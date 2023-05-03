@@ -4,6 +4,3 @@ assistant:
     allow_only_known_speaker: 'True'
     volume: 0.5
     voiceSpeed: 150
-defaults:
-    de:
-        no_intend_recognized: ["Ich habe dich nicht  verstanden.", "Kannst du das nochmal wiederholen?"]

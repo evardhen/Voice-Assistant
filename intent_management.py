@@ -29,7 +29,7 @@ class IntentManagement():
                 arguments = self.set_dynamic_arguments(intent)
                 return getattr(globals()[intent], intent)(**arguments)
         return "Ich habe dich nicht verstanden."
-    
+
     def set_dynamic_arguments(self, intentName):
         arguments = dict()
         if intentName.lower() == "gettime":
@@ -48,6 +48,7 @@ class IntentManagement():
                 arguments[slot["slotName"]] = slot["value"]["value"]
         elif intentName == "set_volume":
             arguments["voice"] = self.va.tts
+            arguments["audioplayer"] = self.va.audioplayer
             arguments["sentence"] = self.sentence
             arguments["language"] = self.language
             for slot in self.parser["slots"]:
@@ -56,7 +57,7 @@ class IntentManagement():
             arguments["voice"] = self.va.tts
             arguments["language"] = self.language
         elif intentName == "set_voiceSpeed":
-            arguments["voice"] = self.va.tts
+            arguments["voice"] = self.va
             arguments["sentence"] = self.sentence
             arguments["language"] = self.language
             for slot in self.parser["slots"]:
@@ -64,11 +65,19 @@ class IntentManagement():
         elif intentName == "get_voiceSpeed":
             arguments["voice"] = self.va.tts
             arguments["language"] = self.language
+        elif intentName == "radio":
+            arguments["audioplayer"] = self.va.audioplayer
+            arguments["volume"] = self.tts.volume
+            arguments["language"] = self.language
+            for slot in self.parser["slots"]:
+                arguments[slot["slotName"]] = slot["value"]["value"]
+        elif intentName == "stop_radio":
+            arguments["audioplayer"] = self.va.audioplayer
         else:
             return ("{} ist nicht in set_dynamic_arguments() zur Auswahl.", intentName)
 
         return arguments
-    
+
     def process(self):
         return self.get_dynamic_intent()
 
@@ -86,8 +95,8 @@ class IntentManagement():
                 globals()[Path(folder).name] = importlib.import_module(name)
                 logger.debug("Modul {} geladen.", str(Path(folder).name))
                 self.dynamic_intents.append(Path(folder).name)
-    
-    
+
+
     def load_snips_model(self, sentence, language):
         # detects intents from training files
         # load files from intents/snips_nlu/ folder
@@ -103,7 +112,7 @@ class IntentManagement():
         except Exception as e:
             logger.error("Snips Engine konnte nicht geladen werden: {}", e)
             sys.exit(1)
-            
+
     def register_callbacks(self):
 		# Registriere alle Callback Funktionen
         logger.info("Registriere Callbacks...")
@@ -116,4 +125,3 @@ class IntentManagement():
                 logger.info('Registriere Callback für {}.', module_name)
                 callbacks.append(getattr(module_obj, 'callback'))
         return callbacks
-

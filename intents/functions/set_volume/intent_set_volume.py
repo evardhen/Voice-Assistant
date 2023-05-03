@@ -11,12 +11,13 @@ except Exception as e:
     logger.error("Konnte config_volume.yaml nicht laden, Fehler: {}", e)
 
 
-def set_volume(voice, sentence, language = "de", volume = None):
+def set_volume(voice, audioplayer, sentence, language = "de", volume = None):
     if volume:
         if volume < 0 or volume > 10:
             return random.choice(config_volume["intent"]["set_volume"][language]["invalid_volume"])
         old_volume = voice.get_volume()
         voice.set_volume(volume)
+        audioplayer.set_volume(volume)
         logger.debug("Lautstärke auf {} gesetzt.", voice.get_volume())
         if volume > old_volume:
             message = random.choice(config_volume["intent"]["set_volume"][language]["increase_volume_by_value"])

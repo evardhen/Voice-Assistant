@@ -2,5 +2,8 @@ vosk-model-spk-0.4/
 vosk-model-de-0.21/
 vosk-model-spk-0.4.zip
 vosk-model-de-0.21.zip
-vosk-model-de-tuda-0.6-900k.zip 
+vosk-model-de-tuda-0.6-900k.zip
 __pycache__
+songs/Do I Wanna Know.wav
+songs/Feeling Good.wav
+.env

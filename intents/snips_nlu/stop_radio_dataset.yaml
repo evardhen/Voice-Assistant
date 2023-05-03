@@ -1,0 +1,10 @@
+---
+type: intent
+name: stop_radio
+utterances:
+    - Stoppe das Radio
+    - Radio aus
+    - Radio ausschalten
+    - Radio ausmachen
+    - Schalte das Radio aus
+    - Mach das Radio aus

@@ -1,0 +1,52 @@
+---
+type: entity
+name: spotify
+automatically_extensible: true
+use_synonyms: true
+matching_strictness: 0.7
+values:
+    - Lady Gaga
+    - Shallow
+    - Die Ärzte
+    - Born this Way
+    - die toten hosen
+    - merman gix
+    - feel good
+    - haus am see
+    - augen auf
+    - junge
+
+---
+type: entity
+name: query_type
+automatically_extensible: true
+use_synonyms: true
+matching_strictness: 0.8
+values:
+    - [artist, künstler, musiker, interpret, sänger, singer]
+    - album
+    - playlist
+    - [song, lied, track, single]
+
+---
+type: intent
+name: spotify
+slots:
+      - name: spotify_query
+        entity: spotify_query
+      - name: query_type
+        entity: query_type
+utterances:
+    - Spiele auf Spotify das [query_type:query_type](lied) [spotify_query:spotify_query](perfekt)
+    - Spiele auf Spotify den [query_type:query_type](song) [spotify_query:spotify_query](haus am see)
+    - Mache auf Spotify den [query_type:query_type](song) [spotify_query:spotify_query](augen auf)
+    - Mache auf Spotify den [query_type:query_type](song) [spotify_query:spotify_query](junge)
+    - Spiele auf Spotify den [query_type:query_type](künstler) [spotify_query:spotify_query](seeed)
+    - Spiele auf Spotify den [query_type:query_type](musiker) [spotify_query:spotify_query](peter fox)
+    - Spiele die [query_type:query_type](playlist) [spotify_query:spotify_query](merman gix) auf Spotify an
+    - Mache auf Spotify die [query_type:query_type](playlist) [spotify_query:spotify_query](feel good) an
+    - Spiele auf Spotify [spotify_query:spotify_query](shallow)
+    - Spiele [spotify_query:spotify_query](born this way) auf Spotify
+    - Spiele [spotify_query:spotify_query](die toten hosen) auf Spotify
+    - Mache [spotify_query:spotify_query](die ärzte) auf Spotify an
+    - Schalte [spotify_query:spotify_query](merman gix) auf Spotify an

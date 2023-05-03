@@ -1,6 +1,6 @@
 from loguru import logger
 import multiprocessing
-from TTS import Voice
+from voice_management import Voice
 import yaml
 import sys
 import pyaudio
@@ -12,8 +12,8 @@ import sys
 from user_management import UserManagement
 import numpy as np
 from intent_management import IntentManagement
-from pygame import mixer
 import os
+from audioplayer import AudioPlayer
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
@@ -26,36 +26,32 @@ class VoiceAssistant():
         default_wakeword = 'terminator'
         device_index = 2 # select correct microphone
         self.is_listening = False
-        self.config = None
         self.mute_volume = 0.1
 
-        # open self.config file:
-        self.open_yml_file()
-
-        # set language and voice:
-        self.set_language_and_voice()
-
-        # wake word detection:
-        self.wakeword_detection(default_wakeword, device_index)
-
-        # speech to text model
-        self.speech_to_text()
-
-        # allow certain users to be recognized
-        self.user_mgmt()
-        
-        # for reminder intent
-        self.intents = IntentManagement(self)
-        self.callbacks = self.intents.register_callbacks()
+        self.open_global_config()
+        self.initialize_voice()
+        self.initialize_wakeword_detection(default_wakeword, device_index)
+        self.load_s2t_model()
+        self.initialize_user_mgmt()
+        self.initialize_intents()
+        self.initialize_music_stream()
 
         logger.debug("Initialisierung abgeschlossen.")
 
+    def initialize_music_stream(self):
+        self.audioplayer = AudioPlayer(self.volume)
 
-    def user_mgmt(self):
+    def initialize_intents(self):
+        self.intents = IntentManagement(self)
+        self.callbacks = self.intents.register_callbacks()
+
+    def initialize_user_mgmt(self):
         self.user_mgmt = UserManagement()
         self.allow_known_speaker = self.config['assistant']['allow_only_known_speaker']
 
     def detect_speaker(self, inputSpeaker):
+        # TODO: Not yet working properly, because the qualitiy of the recorded microphone
+        # data varies a lot
         bestSpeaker = None
         bestCosDIst = 1.1
         for speaker in self.user_mgmt.speaker_table.all():
@@ -69,7 +65,7 @@ class VoiceAssistant():
         return bestSpeaker
 
 
-    def speech_to_text(self):
+    def load_s2t_model(self):
         logger.debug("Lade s2t Modell...")
         s2t_model = Model('./vosk-model-de-0.21/vosk-model-de-0.21') # path to model
         logger.debug("Lade Speaker Modell...")
@@ -78,7 +74,7 @@ class VoiceAssistant():
         self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
 
 
-    def open_yml_file(self):
+    def open_global_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as file:
             try:
                 self.config = yaml.load(file, Loader=yaml.FullLoader)
@@ -87,22 +83,20 @@ class VoiceAssistant():
                 logger.error(exc)
                 sys.exit(1)
 
-    def set_language_and_voice(self, default_language = "de"):
-        mixer.init()
-        mixer.music.set_volume(self.config["assistant"]["volume"])
-        
-        language = self.config['assistant']['language']
+    def initialize_voice(self, default_language = "de"):
+        self.volume = self.config["assistant"]["volume"]
+        self.language = self.config['assistant']['language']
         if not language:
             language = default_language
         logger.info('Verwende Sprache {}.', language)
-        
-        self.tts = Voice(self.config['assistant']['voiceSpeed'], self.config['assistant']['volume'])
+
+        self.tts = Voice(self.config['assistant']['voiceSpeed'], self.volume)
         voices = self.tts.get_voice_id(language)
         if len(voices) > 0:
           self.tts.set_voice(voices[0])
           logger.info('Stimme {}', voices[0])
 
-    def wakeword_detection(self, default_wakeword, device_index):
+    def initialize_wakeword_detection(self, default_wakeword, device_index):
         logger.debug("Starte Wakeword Erkennung.")
         self.wakewords = self.config['assistant']['wakewords']
         if not  self.wakewords:
@@ -116,6 +110,16 @@ class VoiceAssistant():
         #     logger.debug('id: {}, name: {}', self.pyAudio.get_device_info_by_index(i).get('index'), self.pyAudio.get_device_info_by_index(i).get('name'))
         self.audio_stream = self.pyAudio.open(rate = self.porc.sample_rate, channels=1, format = pyaudio.paInt16, input=True, frames_per_buffer=self.porc.frame_length, input_device_index= device_index)
 
+    def execute_callbacks(self):
+        for callback in self.callbacks:
+            output = callback(False, self.language)
+            if output and not self.tts.is_busy():
+                if self.audioplayer.is_listening():
+                    self.audioplayer.set_volume(self.mute_volume)
+                callback(True, self.language)
+                self.tts.say(output)
+                self.audioplayer.set_volume(self.tts.get_volume())
+
     def run(self):
         logger.info("VoiceAssistant gestartet...")
         try:
@@ -127,15 +131,15 @@ class VoiceAssistant():
                     logger.info("Wakeword '{}' erkannt. Wie kann ich dir helfen?",  self.wakewords[keyword_index])
                     self.is_listening = True
                 if self.is_listening:
-                    if mixer.get_busy():
-                        mixer.music.set_volume(self.mute_volume)
-                    
+                    if self.audioplayer.is_listening():
+                        self.audioplayer.set_volume(self.mute_volume)
+
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
                         # logger.info('Result: {}', result)
                         sentence = result['text']
 
-                        self.intents.load_snips_model(sentence, self.config['assistant']['language'])
+                        self.intents.load_snips_model(sentence, self.language)
                         output = self.intents.process()
 
                         logger.info("Ich habe '{}' verstanden.", sentence)
@@ -143,22 +147,15 @@ class VoiceAssistant():
                         self.tts.say(output)
                         self.is_listening = False
                 else:
-                    mixer.music.set_volume(self.config['assistant']['volume'])
-                    
-                    for callback in self.callbacks:
-                        output = callback(False, self.config['assistant']['language'])
-                        if output and not self.tts.is_busy():
-                            if mixer.music.get_busy():
-                                mixer.music.set_volume(self.mute_volume)
-                            self.tts.say(output)
-                            callback(True, self.config['assistant']['language'])
-                                                     
+                    self.audioplayer.set_volume(self.tts.get_volume())
+                    self.execute_callbacks()
+
         except KeyboardInterrupt:
             logger.info("Prozess durch Keyboard unterbrochen.")
 
         finally:
             try:
-                self.config['assistant']['volume'] = self.tts.volume
+                self.volume = self.tts.volume
                 self.config['assistant']['voiceSpeed'] = self.tts.voiceSpeed
                 with open(CONFIG_FILE, "w") as file:
                     yaml.dump(self.config, file, default_flow_style=False, sort_keys=False)
@@ -172,6 +169,8 @@ class VoiceAssistant():
                 self.audio_stream.close()
             if self.pyAudio is not None:
                 self.pyAudio.terminate()
+            if self.audioplayer is not None:
+                self.audioplayer.stop()
 
 
 if __name__ == '__main__':

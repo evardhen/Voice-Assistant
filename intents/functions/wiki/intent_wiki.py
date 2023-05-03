@@ -8,7 +8,7 @@ def wiki(query, language = "de"):
     config_path = os.path.join("intents", "functions", "wiki", "config_wiki.yml")
     with open(config_path, "r", encoding="utf8") as file:
         configFile = yaml.load(file, Loader=yaml.FullLoader)
-        
+
     query = query.strip()
     wikipedia.set_lang(language)
     try:
@@ -22,10 +22,6 @@ def wiki(query, language = "de"):
             except Exception:
                 pass
     return random.choice(configFile["intent"]["wiki"][language]["unknown_entity"]) # no result found
-
-
-def remove_brackets(sentences):
-    return re.sub("[\(\[].*?[\)\]]", "", sentences)
 
 def remove_brackets(sentences):
     ret = ''
