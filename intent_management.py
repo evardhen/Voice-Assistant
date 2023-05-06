@@ -71,8 +71,6 @@ class IntentManagement():
             arguments["language"] = self.language
             for slot in self.parser["slots"]:
                 arguments[slot["slotName"]] = slot["value"]["value"]
-        elif intentName == "stop_radio":
-            arguments["audioplayer"] = self.va.audioplayer
         else:
             return ("{} ist nicht in set_dynamic_arguments() zur Auswahl.", intentName)
 

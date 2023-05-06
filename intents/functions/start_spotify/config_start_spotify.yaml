@@ -1,0 +1,20 @@
+intent:
+    start_spotify:
+        query_types:
+            artist: ["artist", "künstler", "musiker", "interpret", "sänger", "singer"]
+            album: ["album"]
+            playlist: ["playlist"]
+            track: ["song", "lied", "track", "single"]
+        query_type_options:
+            track:
+                repeat: "off"
+                shuffle: false
+            album:
+                repeat: "off"
+                shuffle: true
+            playlist:
+                repeat: context
+                shuffle: true
+            artist:
+                repeat: "off"
+                shuffle: false

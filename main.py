@@ -86,12 +86,12 @@ class VoiceAssistant():
     def initialize_voice(self, default_language = "de"):
         self.volume = self.config["assistant"]["volume"]
         self.language = self.config['assistant']['language']
-        if not language:
-            language = default_language
-        logger.info('Verwende Sprache {}.', language)
+        if not self.language:
+            self.language = default_language
+        logger.info('Verwende Sprache {}.', self.language)
 
         self.tts = Voice(self.config['assistant']['voiceSpeed'], self.volume)
-        voices = self.tts.get_voice_id(language)
+        voices = self.tts.get_voice_id(self.language)
         if len(voices) > 0:
           self.tts.set_voice(voices[0])
           logger.info('Stimme {}', voices[0])

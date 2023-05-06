@@ -1,0 +1,20 @@
+# Stop intent
+---
+type: intent
+name: interrupt
+utterances:
+    - stopp
+    - stop
+    - halt
+    - sei still
+    - sei ruhig
+    - abbrechen
+    - stoppe das Radio
+    - radio aus
+    - musik aus
+    - radio ausschalten
+    - radio ausmachen
+    - schalte das Radio aus
+    - mach das Radio aus
+    - mach die Musik aus
+    - schalte die Musik aus
