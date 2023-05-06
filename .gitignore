@@ -7,3 +7,5 @@ __pycache__
 songs/Do I Wanna Know.wav
 songs/Feeling Good.wav
 .env
+.cache
+.cache-xello102
