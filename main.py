@@ -14,6 +14,7 @@ import numpy as np
 from intent_management import IntentManagement
 import os
 from audioplayer import AudioPlayer
+from spotify_management import Spotify
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
@@ -35,8 +36,11 @@ class VoiceAssistant():
         self.initialize_user_mgmt()
         self.initialize_intents()
         self.initialize_music_stream()
-
+        self.initialize_spotify()
         logger.debug("Initialisierung abgeschlossen.")
+        
+    def initialize_spotify(self):
+        self.spotify = Spotify(self.volume)
 
     def initialize_music_stream(self):
         self.audioplayer = AudioPlayer(self.volume)
@@ -114,7 +118,7 @@ class VoiceAssistant():
         for callback in self.callbacks:
             output = callback(False, self.language)
             if output and not self.tts.is_busy():
-                if self.audioplayer.is_listening():
+                if self.audioplayer.is_playing():
                     self.audioplayer.set_volume(self.mute_volume)
                 callback(True, self.language)
                 self.tts.say(output)
@@ -130,9 +134,14 @@ class VoiceAssistant():
                 if keyword_index >= 0: # -1, if no keyword was detected
                     logger.info("Wakeword '{}' erkannt. Wie kann ich dir helfen?",  self.wakewords[keyword_index])
                     self.is_listening = True
+                    tmp = True
                 if self.is_listening:
-                    if self.audioplayer.is_listening():
+                    if self.audioplayer.is_playing() and tmp:
                         self.audioplayer.set_volume(self.mute_volume)
+                        tmp = False
+                    if self.spotify.is_playing and tmp:
+                        self.spotify.set_volume(self.mute_volume)
+                        tmp = False
 
                     if self.recognizer.AcceptWaveform(pcm):
                         result = json.loads(self.recognizer.Result())
@@ -146,6 +155,11 @@ class VoiceAssistant():
                         logger.info("Chatbot Ausgabe: '{}'.", output)
                         self.tts.say(output)
                         self.is_listening = False
+                        while(True):
+                            if not self.tts.is_busy():
+                                self.spotify.set_volume(self.tts.get_volume())
+                                break
+                                
                 else:
                     self.audioplayer.set_volume(self.tts.get_volume())
                     self.execute_callbacks()

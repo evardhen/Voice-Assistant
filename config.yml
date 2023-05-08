@@ -1,6 +1,8 @@
 assistant:
-    language: "de"
-    wakewords: ['terminator', 'grapefruit']
-    allow_only_known_speaker: 'True'
-    volume: 0.5
-    voiceSpeed: 150
+  language: de
+  wakewords:
+  - terminator
+  - grapefruit
+  allow_only_known_speaker: 'True'
+  volume: 0.5
+  voiceSpeed: 150

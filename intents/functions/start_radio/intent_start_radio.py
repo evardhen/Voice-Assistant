@@ -7,17 +7,17 @@ import re
 from loguru import logger
 import random
 
-def radio(audioplayer, volume, language, query):
-    config_path = os.join.path("./intents/functions/start_radio/config_start_radio.yaml")
+def start_radio(audioplayer, volume, language, name):
+    config_path = os.path.join("./intents/functions/start_radio/config_start_radio.yaml")
     with open(config_path, "r", encoding="utf-8") as file:
         config_file = yaml.load(file, Loader=yaml.FullLoader)
 
     # if no slot has been detected, play a random radio stream (see start_radio_dataset.yaml)
-    if query == None or query == "":
+    if name == None or name == "":
         return random.choice(config_file['intent']['start_radio']['radio_station'])
 
     # convert text numbers to real numbers
-    radio_station = text2numde.sentence2num(query)
+    radio_station = text2numde.sentence2num(name)
     # eliminate unnecessary spaces
     radio_station = re.sub(' +', ' ', radio_station)
 
@@ -25,7 +25,7 @@ def radio(audioplayer, volume, language, query):
         ratio = fuzz.ratio(radio_station.lower(), name.lower())
         logger.info("Übereinstimmung von {} und {} ist {}%", radio_station, name, ratio)
         if ratio > 70:
-            audioplayer.setVolume(volume)
+            audioplayer.set_volume(volume)
             audioplayer.play_stream(URL)
             return ""
 
@@ -33,7 +33,7 @@ def radio(audioplayer, volume, language, query):
         ratio = fuzz.ratio(radio_station.lower(), name.lower())
         logger.info("Übereinstimmung von {} und {} ist {}%", radio_station, name, ratio)
         if ratio > 70:
-            audioplayer.setVolume(volume)
+            audioplayer.set_volume(volume)
             audioplayer.play_file(path)
             #player.play_file("Do I Wanna Know.wav")
             return ""

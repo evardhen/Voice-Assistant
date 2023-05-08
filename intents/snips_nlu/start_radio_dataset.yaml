@@ -21,7 +21,7 @@ type: intent
 name: start_radio
 slots:
         - name: name
-        entity: stream
+          entity: stream
 utterances:
     - Radio an
     - Mache das Radio an
@@ -29,6 +29,7 @@ utterances:
     - Aktiviere das Radio
     - Schalte [name:stream](deutschlandfunk) an
     - Spiele [name:stream](achtundachtzig acht)
+    - Spiele den Radiosender [name:stream](achtundachtzig acht)
     - Spiele [name:stream](transat)
     - Schalte [name:stream](fritz) an
     - Mache [name:stream](transat) an

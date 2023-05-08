@@ -47,6 +47,7 @@ class IntentManagement():
             for slot in self.parser["slots"]:
                 arguments[slot["slotName"]] = slot["value"]["value"]
         elif intentName == "set_volume":
+            arguments["spotify"] = self.va.spotify
             arguments["voice"] = self.va.tts
             arguments["audioplayer"] = self.va.audioplayer
             arguments["sentence"] = self.sentence
@@ -65,10 +66,15 @@ class IntentManagement():
         elif intentName == "get_voiceSpeed":
             arguments["voice"] = self.va.tts
             arguments["language"] = self.language
-        elif intentName == "radio":
+        elif intentName == "start_radio":
             arguments["audioplayer"] = self.va.audioplayer
-            arguments["volume"] = self.tts.volume
+            arguments["volume"] = self.va.tts.volume
             arguments["language"] = self.language
+            for slot in self.parser["slots"]:
+                arguments[slot["slotName"]] = slot["value"]["value"]
+        elif intentName == "start_spotify":
+            arguments["spotify"] = self.va.spotify
+            arguments["volume"] = self.va.tts.volume
             for slot in self.parser["slots"]:
                 arguments[slot["slotName"]] = slot["value"]["value"]
         else:

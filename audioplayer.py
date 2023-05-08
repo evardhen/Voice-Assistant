@@ -14,6 +14,7 @@ class AudioPlayer:
 	def __init__(self, volume = 0.5):
 		self._process = None
 		self._volume = volume
+		self.process = None
 
 	def play_file(self, file):
 		if self._process:
@@ -75,19 +76,19 @@ class AudioPlayer:
 		print(samplerate)
 
 		try:
-			process = ffmpeg.input(source).output('pipe:', format='f32le', acodec='pcm_f32le', ac=channels, ar=samplerate, loglevel='quiet').run_async(pipe_stdout=True)
+			self.process = ffmpeg.input(source).output('pipe:', format='f32le', acodec='pcm_f32le', ac=channels, ar=samplerate, loglevel='quiet').run_async(pipe_stdout=True)
 			stream = sd.OutputStream(samplerate=samplerate, blocksize=1024, device=sd.default.device['output'], channels=channels, dtype='float32', callback=_callback_stream)
 			print(stream.samplesize)
 			read_size = 1024 * channels * stream.samplesize
 			for _ in range(20):
-				data = np.frombuffer(process.stdout.read(read_size), dtype='float32')
+				data = np.frombuffer(self.process.stdout.read(read_size), dtype='float32')
 				data.shape = -1, channels
 				_q.put_nowait(data)
 			logger.debug("Starte Stream...")
 			with stream:
 				timeout = 1024 * 20 / samplerate
 				while True:
-					data = np.frombuffer(process.stdout.read(read_size), dtype='float32')
+					data = np.frombuffer(self.process.stdout.read(read_size), dtype='float32')
 					data.shape = -1, channels
 					_q.put(data, timeout=timeout)
 		except queue.Full as e:
@@ -96,11 +97,11 @@ class AudioPlayer:
 			logger.error(e)
 
 	def stop(self):
-		if self._process:
-			self._process.terminate()
+		if self.process:
+			self.process.terminate()
 
 	def is_playing(self):
-		return self.process and self._process.is_alive()
+		return self.process and self.process.is_alive()
 
 	def set_volume(self, volume):
 		self._volume = max(0.0, min(volume, 1.0))
