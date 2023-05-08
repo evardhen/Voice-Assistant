@@ -15,6 +15,7 @@ values:
     - vierundneunzig drei r s zwei
     - vierundneunzig drei
     - achtundachtzig acht
+    - trans
 
 ---
 type: intent
@@ -33,7 +34,7 @@ utterances:
     - Spiele [name:stream](transat)
     - Schalte [name:stream](fritz) an
     - Mache [name:stream](transat) an
-    - Mache den Radiosender [name:stream](transat) an
+    - Mache den Radiosender [name:stream](trans) an
     - Mache den Radiosender [name:stream](fritz) an
     - Schalte den Radiosender [name:stream](m d r aktuell) an
     - Schalte den Radiosender [name:stream](r b b achtundachtzig acht) an

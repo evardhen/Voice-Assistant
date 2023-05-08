@@ -156,7 +156,7 @@ class VoiceAssistant():
                         self.tts.say(output)
                         self.is_listening = False
                         while(True):
-                            if not self.tts.is_busy():
+                            if not self.tts.is_busy() and self.spotify.is_playing:
                                 self.spotify.set_volume(self.tts.get_volume())
                                 break
                                 
