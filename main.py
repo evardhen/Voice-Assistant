@@ -131,7 +131,7 @@ class VoiceAssistant():
                 pcm = self.audio_stream.read(self.porc.frame_length)
                 pcm_unpacked =  struct.unpack_from("h" * self.porc.frame_length, pcm)
                 keyword_index = self.porc.process(pcm_unpacked)
-                if keyword_index >= 0: # -1, if no keyword was detected
+                if keyword_index >= 0 and not self.is_listening: # -1, if no keyword was detected
                     logger.info("Wakeword '{}' erkannt. Wie kann ich dir helfen?",  self.wakewords[keyword_index])
                     self.is_listening = True
                     tmp = True
@@ -155,13 +155,10 @@ class VoiceAssistant():
                         logger.info("Chatbot Ausgabe: '{}'.", output)
                         self.tts.say(output)
                         self.is_listening = False
-                        while(True):
-                            if not self.tts.is_busy() and self.spotify.is_playing:
-                                self.spotify.set_volume(self.tts.get_volume())
-                                break
                                 
                 else:
-                    self.audioplayer.set_volume(self.tts.get_volume())
+                    if not self.tts.is_busy() and self.spotify.is_playing:
+                        self.audioplayer.set_volume(self.tts.get_volume())
                     self.execute_callbacks()
 
         except KeyboardInterrupt:

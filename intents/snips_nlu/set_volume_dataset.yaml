@@ -9,12 +9,12 @@ utterances:
     - Rede lauter
     - Leiser
     - Rede leiser
-    - Verringere die Lautstärke auf [volume:snips/number](0.5)
-    - Verringere die Lautstärke auf [volume:snips/number](1.0)
-    - Erhöhe die Lautstärke auf [volume:snips/number](0.5)
-    - Erhöhe die Lautstärke auf [volume:snips/number](1.0)
-    - Setze die Lautstärke auf [volume:snips/number](1.0)
-    - Setze die Lautstärke auf [volume:snips/number](0.5)
+    - Verringere die Lautstärke auf [volume:snips/number](50) Prozent
+    - Verringere die Lautstärke auf [volume:snips/number](100) Prozent
+    - Erhöhe die Lautstärke auf [volume:snips/number](50) Prozent
+    - Erhöhe die Lautstärke auf [volume:snips/number](100) Prozent
+    - Setze die Lautstärke auf [volume:snips/number](100) Prozent
+    - Setze die Lautstärke auf [volume:snips/number](30) Prozent
 
 
 
