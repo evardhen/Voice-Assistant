@@ -25,7 +25,8 @@ class VoiceAssistant():
     def __init__(self):
         global CONFIG_FILE
         default_wakeword = 'terminator'
-        device_index = 2 # select correct microphone
+        #device_index = 2 # select correct microphone
+        device_index = 1 # select correct microphone (for laptop)
         self.is_listening = False
         self.mute_volume = 0.1
 
@@ -38,7 +39,7 @@ class VoiceAssistant():
         self.initialize_music_stream()
         self.initialize_spotify()
         logger.debug("Initialisierung abgeschlossen.")
-        
+
     def initialize_spotify(self):
         self.spotify = Spotify(self.volume)
 
@@ -155,11 +156,11 @@ class VoiceAssistant():
                         logger.info("Chatbot Ausgabe: '{}'.", output)
                         self.tts.say(output)
                         self.is_listening = False
-                        while(True):
-                            if not self.tts.is_busy() and self.spotify.is_playing:
-                                self.spotify.set_volume(self.tts.get_volume())
-                                break
-                                
+                        # while(True):
+                        #     if not self.tts.is_busy() and self.spotify.is_playing:
+                        #         self.spotify.set_volume(self.tts.get_volume())
+                        #         break
+
                 else:
                     self.audioplayer.set_volume(self.tts.get_volume())
                     self.execute_callbacks()
