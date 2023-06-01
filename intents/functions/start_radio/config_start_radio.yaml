@@ -18,6 +18,7 @@ intent:
             "RPR 1": "https://streams.rpr1.de/rpr-simulcast-128-mp3"
             "Transat": "https://n13a-eu.rcs.revma.com/dy09pqzctwzuv?rj-ttl=5&rj-tok=AAABh9PPc-EA5VOxN_isA_41mQ"
             "Trans": "https://n13a-eu.rcs.revma.com/dy09pqzctwzuv?rj-ttl=5&rj-tok=AAABh9PPc-EA5VOxN_isA_41mQ"
+            "Ostseewelle": "http://irmedia.streamabc.net/irm-oswsommer-mp3-128-6375323?sABC=6478q422%230%235077q11r068877r547p3qn54no65o960%23&aw_0_1st.playerid=&amsparams=playerid:;skey:1685640226"
         file_name:
             "Do I Wanna Know": "./songs/Do I Wanna Know.wav"
             "Feeling Good": "./songs/Feeling Good.wav"

@@ -25,8 +25,8 @@ class VoiceAssistant():
     def __init__(self):
         global CONFIG_FILE
         default_wakeword = 'terminator'
-        #device_index = 2 # select correct microphone
-        device_index = 1 # select correct microphone (for laptop)
+        device_index = 2 # select correct microphone (for PC)
+        # device_index = 1 # select correct microphone (for laptop)
         self.is_listening = False
         self.mute_volume = 0.1
 

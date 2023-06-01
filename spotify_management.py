@@ -13,6 +13,8 @@ from loguru import logger
 
 class Spotify():
     def __init__(self, volume):
+        # self.name = "LAPTOP-991DG25U"
+        self.name = "HENRI"
         self.is_playing = False
         config_path = os.path.join("./intents/functions/start_spotify/config_start_spotify.yaml")
         with open(config_path, "r") as file:
@@ -48,9 +50,7 @@ class Spotify():
         devices = self.sp.devices()
         for device in devices['devices']:
             logger.debug("Gerätename: {}", device['name'])
-            name = "LAPTOP-991DG25U"
-            # name = "HENRI"
-            if device['name'] == name: # Replace 'your_device_name' with the name of your device
+            if device['name'] == self.name: # Replace 'your_device_name' with the name of your device
                 self.device_id = device['id']
                 break
         if not self.device_id:
@@ -77,7 +77,7 @@ class Spotify():
     def _play_unknown_query_type(self):
         #TODO: Similarity score müsst je nach Anfrage angepasst werden, zurZeit inaktiv
         search_result = self.sp.search(q=self.modified_query, limit=1)
-        self.sp, context_uri = self._set_playback_options(self.sp, self.modified_query)
+        context_uri = self._set_playback_options()
         similarity_score = fuzz.ratio(search_result['tracks']['items'][0]['name'].lower(), self.spotify_query.lower())
         modified_similarity_score = fuzz.ratio(search_result['tracks']['items'][0]['name'].lower(), self.modified_query.lower())
         logger.debug("Ähnlichkeit der Anfrage und der Spotifysuche: {}, {}: {}",search_result['tracks']['items'][0]['name'].lower(), self.spotify_query.lower(), similarity_score)
@@ -95,7 +95,7 @@ class Spotify():
                 best_match, best_score = query_name, score
 
         if best_match in ['track', 'album', 'artist']:
-            self.sp, context_uri = self._set_playback_options(best_match)
+            context_uri = self._set_playback_options(best_match)
         elif best_match == 'playlist':
             if result := self._play_user_playlists():
                 return result
@@ -149,7 +149,7 @@ class Spotify():
             context_uri = search_result['artists']['items'][0]['uri']
         else:
             return logger.debug("Spotify konnte die Anfrage {} nicht finden.", self.modified_query)
-        return self.sp, context_uri
+        return context_uri
 
     def stop(self):
         self.sp.pause_playback(device_id=self.device_id)
@@ -168,3 +168,14 @@ class Spotify():
         self.volume_percent = self._volume_abs_to_percent(volume)
         self.sp.volume(volume_percent=self.volume_percent, device_id=self.device_id)
         logger.debug("Spotify Lautstärke auf {} Prozent gesetzt.", self.volume_percent)
+
+if __name__ == '__main__':
+    sp = Spotify(0.3)
+    # sp.play_spotify("Perfekt", "track")
+    # sp.play_spotify("mix", "playlist")
+    # sp.play_spotify("Peter Fox", "artist")
+    # sp.play_spotify("Jazz ist anders", "album")
+    # sp.play_spotify("Jazz ist anders", query_type=None)
+    # sp.play_spotify("mix", query_type=None)
+    # sp.play_spotify("Perfekt", query_type=None)
+    sp.play_spotify("Peter Fox", query_type=None)

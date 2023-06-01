@@ -34,6 +34,7 @@ class IntentManagement():
         arguments = dict()
         if intentName.lower() == "gettime":
             arguments["va"] = self.va
+            arguments["language"] = self.language
             for slot in self.parser["slots"]:
                 arguments[slot["slotName"]] = slot["value"]["value"]
         elif intentName == "interrupt":

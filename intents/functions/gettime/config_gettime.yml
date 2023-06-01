@@ -8,9 +8,3 @@ intent:
             time_in_place: ["It is {} {} in {}."]
             time_here: ["It is {} {}.", "It is {} o'clock and {} minutes."]
             place_not_found: ["I don't know the place {}.", "I don't know a place called {}."]
-        timezones:  
-            Europe/Berlin: ["deutschland", "germany"]
-            Europe/London: ["england", "großbrittanien", "great britain"]
-            Europe/Paris: ["frankreich", "france"]
-            America/New_York: ["amerika", "america"]
-            Asia/Shanghai: ["china"]
