@@ -1,13 +1,11 @@
 from datetime import datetime
 import pytz
-from pytz import country_names, country_timezones
 import os
 import random
 import yaml
 from loguru import logger
 import pycountry
 import gettext
-import copy
 
 def gettime(va, language, place="default"):
     config_path = os.path.join('intents','functions','gettime','config_gettime.yml')
