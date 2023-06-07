@@ -15,6 +15,7 @@ from intent_management import IntentManagement
 import os
 from audioplayer import AudioPlayer
 from spotify_management import Spotify
+from chatbot_initialization import Chatbot
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
@@ -32,6 +33,7 @@ class VoiceAssistant():
 
         self.open_global_config()
         self.initialize_voice()
+        self.initialize_chatbot()
         self.initialize_wakeword_detection(default_wakeword, device_index)
         self.load_s2t_model()
         self.initialize_user_mgmt()
@@ -39,6 +41,9 @@ class VoiceAssistant():
         self.initialize_music_stream()
         self.initialize_spotify()
         logger.debug("Initialisierung abgeschlossen.")
+
+    def initialize_chatbot(self):
+        self.chatbot = Chatbot(self.language)
 
     def initialize_spotify(self):
         self.spotify = Spotify(self.volume)

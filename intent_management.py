@@ -39,10 +39,10 @@ class IntentManagement():
                 arguments[slot["slotName"]] = slot["value"]["value"]
         elif intentName == "interrupt":
             arguments["va"] = self.va
-        elif intentName == "wiki":
+        elif intentName == "wiki_gpt":
+            arguments["chatbot"] = self.va.chatbot
             for slot in self.parser["slots"]:
                 arguments["query"] = slot["value"]["value"]
-            arguments["language"] = self.language
         elif intentName == "reminder":
             arguments["language"] = self.language
             for slot in self.parser["slots"]:

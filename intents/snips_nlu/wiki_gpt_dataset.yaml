@@ -36,7 +36,7 @@ values:
 
 ---
 type: intent
-name: wiki
+name: wiki_gpt
 utterances:
     - Wer ist [request:query](Michael Jackson)
     - Wer ist [request:query](Peter Fox)
@@ -71,6 +71,7 @@ utterances:
     - Weißt du etwas über [request:query](Interpolation)
     - Weißt du etwas über [request:query](Rosen)
     - Weißt du etwas über [request:query](Künstliche Intelligenz)
+    - Wie alt ist [request:query](Barack Obama)
 
 
 
