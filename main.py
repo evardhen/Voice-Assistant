@@ -1,6 +1,5 @@
 from loguru import logger
 import multiprocessing
-from voice_management import Voice
 import yaml
 import sys
 import pyaudio
@@ -9,10 +8,12 @@ import struct
 from vosk import Model, SpkModel, KaldiRecognizer
 import json
 import sys
-from user_management import UserManagement
 import numpy as np
-from intent_management import IntentManagement
 import os
+
+from voice_management import Voice
+from user_management import UserManagement
+from intent_management import IntentManagement
 from audioplayer import AudioPlayer
 from spotify_management import Spotify
 from chatbot_initialization import Chatbot
@@ -77,9 +78,9 @@ class VoiceAssistant():
 
     def load_s2t_model(self):
         logger.debug("Lade s2t Modell...")
-        s2t_model = Model('./vosk-model-de-0.21/vosk-model-de-0.21') # path to model
+        s2t_model = Model('./speech_model/vosk-model-de-0.21/vosk-model-de-0.21') # path to model
         logger.debug("Lade Speaker Modell...")
-        speaker_model = SpkModel('./vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
+        speaker_model = SpkModel('./speech_model/vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
         logger.debug("Speaker Modelle erfolgreich geladen.")
         self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
 
