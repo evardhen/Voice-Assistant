@@ -38,8 +38,8 @@ class Chatbot():
         
         tools = [
             Tool(name = "Google Search", func=google_search.run, description="useful for when you need to answer questions about current events"),
-            Tool(name = "Summary", func=summry_chain.run, description="useful for when you summarize a conversation. The input to this tool should be a string, representing who will read this summary."),
-            Tool(name = "Wikipedia Search", func=wikipedia_search.run, description="useful for when you need to answer questions about scientific problems or facts.")
+            Tool(name = "Summary", func=summry_chain.run, description="useful for when you summarize a conversation. The input to this tool should be a string, representing who will read this summary.")
+            # Tool(name = "Wikipedia Search", func=wikipedia_search.run, description="useful for when you need to answer questions about scientific problems or facts.")
         ]
         
         prefix = f"""Assistant is a large language model trained by OpenAI.
@@ -58,3 +58,8 @@ class Chatbot():
         llm_chain = LLMChain(llm=OpenAI(temperature=0), prompt=prompt)
         agent = ZeroShotAgent(llm_chain=llm_chain, tools=tools, verbose=True)
         self.agent_chain = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True, memory=memory)    
+    
+if __name__ == "__main__":
+    chatbot = Chatbot("en")
+    query = "I am writing a king of the hill ai in python, which is a variation from chess. For the neural network i need a lot of played games. Are there any resources where you can download king of the hill games? Do you have any links?"
+    chatbot.agent_chain.run(input=query)
