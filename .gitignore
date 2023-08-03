@@ -9,3 +9,6 @@ __pycache__
 .cache-xello102
 image_model/
 songs/
+usb_4_mic_array/
+speech_model/
+pictures/
