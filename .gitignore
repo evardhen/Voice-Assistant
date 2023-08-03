@@ -4,8 +4,8 @@ vosk-model-spk-0.4.zip
 vosk-model-de-0.21.zip
 vosk-model-de-tuda-0.6-900k.zip
 __pycache__
-songs/Do I Wanna Know.wav
-songs/Feeling Good.wav
 .env
 .cache
 .cache-xello102
+image_model/
+songs/

@@ -1,15 +1,17 @@
 from loguru import logger
-import multiprocessing
 import yaml
 import sys
 import pyaudio
 import pvporcupine
 import struct
 from vosk import Model, SpkModel, KaldiRecognizer
-import json
 import sys
 import numpy as np
 import os
+import wave
+import threading
+import dotenv
+import openai
 
 from voice_management import Voice
 from user_management import UserManagement
@@ -17,7 +19,7 @@ from intent_management import IntentManagement
 from audioplayer import AudioPlayer
 from spotify_management import Spotify
 from chatbot_initialization import Chatbot
-
+from usb_4_mic_array.VAD import speech_activity_detection
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
 
@@ -26,12 +28,14 @@ class VoiceAssistant():
 
     def __init__(self):
         global CONFIG_FILE
+        self.audio_frames = []
         default_wakeword = 'terminator'
-        device_index = 2 # select correct microphone (for PC)
-        # device_index = 1 # select correct microphone (for laptop)
+        # device_index = 2 # select correct microphone (for PC)
+        device_index = 1 # select correct microphone (for laptop)
         self.is_listening = False
         self.mute_volume = 0.1
 
+        dotenv.load_dotenv()
         self.open_global_config()
         self.initialize_voice()
         self.initialize_chatbot()
@@ -118,7 +122,9 @@ class VoiceAssistant():
         self.pyAudio = pyaudio.PyAudio()
         # # select correct microphone
         # for i in range(self.pyAudio.get_device_count()):
-        #     logger.debug('id: {}, name: {}', self.pyAudio.get_device_info_by_index(i).get('index'), self.pyAudio.get_device_info_by_index(i).get('name'))
+        #     device_info = self.pyAudio.get_device_info_by_index(i)
+        #     print(f"Device {i}: {device_info['name']} (Sample Rate: {device_info['defaultSampleRate']} Hz, Channels: {device_info['maxInputChannels']})")
+        logger.debug("Sample rate: {}", self.porc.sample_rate)
         self.audio_stream = self.pyAudio.open(rate = self.porc.sample_rate, channels=1, format = pyaudio.paInt16, input=True, frames_per_buffer=self.porc.frame_length, input_device_index= device_index)
 
     def execute_callbacks(self):
@@ -131,42 +137,75 @@ class VoiceAssistant():
                 self.tts.say(output)
                 self.audioplayer.set_volume(self.tts.get_volume())
 
+    def save_audio_to_wav(self, filename):
+        wav_file = wave.open(filename, "wb")
+        wav_file.setnchannels(1)  # Mono audio channel
+        wav_file.setsampwidth(self.pyAudio.get_sample_size(pyaudio.paInt16))  # 2 bytes per sample (16-bit audio)
+        wav_file.setframerate(self.porc.sample_rate)  # Set the frame rate to match the audio stream
+        wav_file.writeframes(b''.join(self.audio_frames))
+        wav_file.close()
+
+    def speech_activity_detection(self):
+        while True:
+            pcm = self.audio_stream.read(self.porc.frame_length)
+            if self.recognizer.AcceptWaveform(pcm):
+                self.recognizer.Reset()
+                logger.debug("Thread 1 zur Spracherkennung erfolgreich beendet.")
+                return
+    
+    def recognize_speech(self):
+        if self.audioplayer.is_playing():
+            self.audioplayer.set_volume(self.mute_volume)
+        if self.spotify.is_playing:
+            self.spotify.set_volume(self.mute_volume)
+
+        thread = threading.Thread(target=self.speech_activity_detection)
+        thread.start()
+        threshhold = 8
+        thread2 = threading.Thread(target=speech_activity_detection, args=(threshhold,))
+        thread2.start()
+        while thread.is_alive() and thread2.is_alive():
+            pcm = self.audio_stream.read(self.porc.frame_length)
+            self.audio_frames.append(pcm)
+
+
+        # Write the recorded audio data to a .wav file
+        self.save_audio_to_wav("./recorded_audio.wav")
+        self.audio_frames = []
+
+        sentence = self.whisper("./recorded_audio.wav")
+
+        # result = json.loads(self.recognizer.Result())
+        # # logger.info('Result: {}', result)
+        # sentence = result['text']
+        logger.info("Ich habe '{}' verstanden.", sentence)
+
+        output = self.intents.process(sentence)
+
+        self.tts.say(output)
+
+    def whisper(self, filename):
+        openai.api_key = os.environ.get('OPENAI_API_KEY')
+        audio_file = open(filename, "rb")
+        transcript = openai.Audio.transcribe("whisper-1", audio_file)
+        return transcript.text
+
     def run(self):
         logger.info("VoiceAssistant gestartet...")
         try:
             while True:
                 pcm = self.audio_stream.read(self.porc.frame_length)
+
                 pcm_unpacked =  struct.unpack_from("h" * self.porc.frame_length, pcm)
                 keyword_index = self.porc.process(pcm_unpacked)
-                if keyword_index >= 0 and not self.is_listening: # -1, if no keyword was detected
+                if keyword_index >= 0: # -1, if no keyword was detected
                     logger.info("Wakeword '{}' erkannt. Wie kann ich dir helfen?",  self.wakewords[keyword_index])
-                    self.is_listening = True
-                    tmp = True
-                if self.is_listening:
-                    if self.audioplayer.is_playing() and tmp:
-                        self.audioplayer.set_volume(self.mute_volume)
-                        tmp = False
-                    if self.spotify.is_playing and tmp:
-                        self.spotify.set_volume(self.mute_volume)
-                        tmp = False
-
-                    if self.recognizer.AcceptWaveform(pcm):
-                        result = json.loads(self.recognizer.Result())
-                        # logger.info('Result: {}', result)
-                        sentence = result['text']
-
-                        self.intents.load_snips_model(sentence, self.language)
-                        output = self.intents.process()
-
-                        logger.info("Ich habe '{}' verstanden.", sentence)
-                        logger.info("Chatbot Ausgabe: '{}'.", output)
-                        self.tts.say(output)
-                        self.is_listening = False
+                    self.recognize_speech()
+                    keyword_index = -1
                                 
-                else:
-                    if not self.tts.is_busy() and self.spotify.is_playing:
-                        self.audioplayer.set_volume(self.tts.get_volume())
-                    self.execute_callbacks()
+                if not self.tts.is_busy() and self.spotify.is_playing:
+                    self.audioplayer.set_volume(self.tts.get_volume())
+                self.execute_callbacks()
 
         except KeyboardInterrupt:
             logger.info("Prozess durch Keyboard unterbrochen.")
@@ -192,6 +231,5 @@ class VoiceAssistant():
 
 
 if __name__ == '__main__':
-    multiprocessing.set_start_method("spawn")
     va = VoiceAssistant()
     va.run()

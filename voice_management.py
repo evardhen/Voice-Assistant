@@ -1,7 +1,7 @@
-from loguru import logger
 import pyttsx3
+import threading
+from loguru import logger
 from multiprocessing import Process
-
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -10,6 +10,7 @@ def __speak__(text, voiceId, speed, vol):
     engine.setProperty('volume', vol)
     engine.say(text)
     engine.runAndWait()
+    logger.debug("Finished speaker thread.")
 
 class Voice():
     def __init__(self, voiceSpeed = 150, volume = 0.5):
@@ -18,6 +19,13 @@ class Voice():
         self.voiceSpeed = voiceSpeed
         self.volume = volume
         
+
+    def initialize_voice(self, voiceId, speed, vol):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('voice', voiceId)
+        self.engine.setProperty('rate', speed)
+        self.engine.setProperty('volume', vol)
+
     def get_volume(self):
         return self.volume
     
@@ -31,11 +39,8 @@ class Voice():
         return self.voiceSpeed
 
     def say(self, text):
-        if self.process:
-            self.stop()
-        p = Process(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
-        p.start()
-        self.process = p
+        thread = threading.Thread(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
+        thread.start()
     
     def is_busy(self):
         if self.process:
@@ -43,10 +48,6 @@ class Voice():
 
     def set_voice(self, voiceId):
         self.voiceId = voiceId
-
-    def stop(self):
-        if self.process:
-          self.process.terminate()
 
     def get_voice_id(self, language=''):
         result = []
