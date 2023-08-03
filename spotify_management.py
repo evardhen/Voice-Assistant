@@ -13,8 +13,8 @@ from loguru import logger
 
 class Spotify():
     def __init__(self, volume):
-        # self.name = "LAPTOP-991DG25U"
-        self.name = "HENRI"
+        self.name = "HENRI_LAPTOP"
+        # self.name = "HENRI"
         self.is_playing = False
         config_path = os.path.join("./intents/functions/start_spotify/config_start_spotify.yaml")
         with open(config_path, "r") as file:

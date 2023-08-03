@@ -1,7 +1,12 @@
 import pyttsx3
 import threading
 from loguru import logger
-from multiprocessing import Process
+import sounddevice as sd
+import soundfile as sf
+from langdetect import detect
+from gtts import gTTS
+
+SPEECH_FILE_PATH = "output.wav"
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -12,19 +17,31 @@ def __speak__(text, voiceId, speed, vol):
     engine.runAndWait()
     logger.debug("Finished speaker thread.")
 
+def __speak_gtts__(text, volume, default_language):
+    detected_language = detect_language(text, default_language)
+
+    tts = gTTS(text=text, lang=detected_language, slow=False)
+    # Saving the converted audio in an mp3 file
+    tts.save(SPEECH_FILE_PATH) 
+
+    data, fs = sf.read(SPEECH_FILE_PATH)
+    scaled_data = volume * data
+    sd.play(scaled_data, fs)
+    sd.wait()
+    logger.debug("Finished speaker thread.")
+
+def detect_language(string, default_language):
+    detected_language = detect(string)
+    if detected_language not in ["de", "en"]:
+        detected_language = default_language
+    return detected_language
+
 class Voice():
     def __init__(self, voiceSpeed = 150, volume = 0.5):
         self.process = None
         self.voiceId = None
         self.voiceSpeed = voiceSpeed
         self.volume = volume
-        
-
-    def initialize_voice(self, voiceId, speed, vol):
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('voice', voiceId)
-        self.engine.setProperty('rate', speed)
-        self.engine.setProperty('volume', vol)
 
     def get_volume(self):
         return self.volume
@@ -38,8 +55,9 @@ class Voice():
     def get_voiceSpeed(self):
         return self.voiceSpeed
 
-    def say(self, text):
+    def say(self, text, default_language):
         thread = threading.Thread(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
+        # thread = threading.Thread(target=__speak_gtts__, args=(text, self.volume, default_language))
         thread.start()
     
     def is_busy(self):

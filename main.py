@@ -20,16 +20,18 @@ from audioplayer import AudioPlayer
 from spotify_management import Spotify
 from chatbot_initialization import Chatbot
 from usb_4_mic_array.VAD import speech_activity_detection
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
-
+KEYWORD_PATH = os.path.abspath(os.path.join(".", "custom_wakewords", "Hey-Luna_de_windows_v2_2_0.ppn"))
+MODEL_FILE_PATH = os.path.abspath(os.path.join(".", "custom_wakewords", "porcupine_params_de.pv"))
 
 class VoiceAssistant():
 
     def __init__(self):
         global CONFIG_FILE
         self.audio_frames = []
-        default_wakeword = 'terminator'
+        self.default_wakeword = 'Hey Luna'
         # device_index = 2 # select correct microphone (for PC)
         device_index = 1 # select correct microphone (for laptop)
         self.is_listening = False
@@ -39,7 +41,7 @@ class VoiceAssistant():
         self.open_global_config()
         self.initialize_voice()
         self.initialize_chatbot()
-        self.initialize_wakeword_detection(default_wakeword, device_index)
+        self.initialize_wakeword_detection(device_index)
         self.load_s2t_model()
         self.initialize_user_mgmt()
         self.initialize_intents()
@@ -111,14 +113,17 @@ class VoiceAssistant():
           self.tts.set_voice(voices[0])
           logger.info('Stimme {}', voices[0])
 
-    def initialize_wakeword_detection(self, default_wakeword, device_index):
+    def initialize_wakeword_detection(self, device_index):
         logger.debug("Starte Wakeword Erkennung.")
         self.wakewords = self.config['assistant']['wakewords']
-        if not  self.wakewords:
-             self.wakewords = [default_wakeword]
+        if not self.wakewords:
+             self.wakewords = [self.default_wakeword]
         logger.debug('Wakewords sind {}', ', '.join( self.wakewords))
 
-        self.porc = pvporcupine.create(keywords= self.wakewords)
+        # print(pvporcupine.KEYWORDS)
+        dotenv.load_dotenv()
+        PICOVOICE_KEY = os.environ.get('PICOVOICE_KEY')
+        self.porc = pvporcupine.create(access_key=PICOVOICE_KEY, keyword_paths=[KEYWORD_PATH], model_path=MODEL_FILE_PATH)
         self.pyAudio = pyaudio.PyAudio()
         # # select correct microphone
         # for i in range(self.pyAudio.get_device_count()):
@@ -134,7 +139,7 @@ class VoiceAssistant():
                 if self.audioplayer.is_playing():
                     self.audioplayer.set_volume(self.mute_volume)
                 callback(True, self.language)
-                self.tts.say(output)
+                self.tts.say(output, self.language)
                 self.audioplayer.set_volume(self.tts.get_volume())
 
     def save_audio_to_wav(self, filename):
@@ -161,7 +166,7 @@ class VoiceAssistant():
 
         thread = threading.Thread(target=self.speech_activity_detection)
         thread.start()
-        threshhold = 8
+        threshhold = 9
         thread2 = threading.Thread(target=speech_activity_detection, args=(threshhold,))
         thread2.start()
         while thread.is_alive() and thread2.is_alive():
@@ -182,7 +187,7 @@ class VoiceAssistant():
 
         output = self.intents.process(sentence)
 
-        self.tts.say(output)
+        self.tts.say(output, self.language)
 
     def whisper(self, filename):
         openai.api_key = os.environ.get('OPENAI_API_KEY')

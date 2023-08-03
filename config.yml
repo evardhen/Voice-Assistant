@@ -1,8 +1,7 @@
 assistant:
   language: de
   wakewords:
-  - terminator
-  - grapefruit
+  - Hey Luna
   allow_only_known_speaker: 'True'
   volume: 0.5
   voiceSpeed: 150
