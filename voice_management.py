@@ -1,12 +1,16 @@
 import pyttsx3
 import threading
 from loguru import logger
-import sounddevice as sd
-import soundfile as sf
 from langdetect import detect
 from gtts import gTTS
+import numpy as np
+import sounddevice as sd
+import soundfile as sf
+from pydub import AudioSegment
+from pydub.effects import speedup
 
-SPEECH_FILE_PATH = "output.wav"
+
+SPEECH_FILE_PATH = "output.mp3"
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -17,16 +21,28 @@ def __speak__(text, voiceId, speed, vol):
     engine.runAndWait()
     logger.debug("Finished speaker thread.")
 
-def __speak_gtts__(text, volume, default_language):
+def __speak_gtts__(text, volume_change_percent, speed, default_language):
     detected_language = detect_language(text, default_language)
 
     tts = gTTS(text=text, lang=detected_language, slow=False)
-    # Saving the converted audio in an mp3 file
-    tts.save(SPEECH_FILE_PATH) 
+    # Saving the converted audio in a BytesIO object
+    tts.save(SPEECH_FILE_PATH)
 
-    data, fs = sf.read(SPEECH_FILE_PATH)
-    scaled_data = volume * data
-    sd.play(scaled_data, fs)
+    audio = AudioSegment.from_mp3(SPEECH_FILE_PATH)
+    audio = change_volume(audio, volume_change_percent)
+
+    chunk_size = 150 # in milliseconds
+    if speed != 1.0:
+        audio = speedup(audio, speed, chunk_size)
+        
+    outfile_path = "./output_modified.wav"
+    outfile_format = "wav"
+    audio.export(outfile_path, format=outfile_format)
+
+    # Read the wav file
+    data, fs = sf.read(outfile_path)
+    # Play the audio
+    sd.play(data, fs)
     sd.wait()
     logger.debug("Finished speaker thread.")
 
@@ -35,6 +51,15 @@ def detect_language(string, default_language):
     if detected_language not in ["de", "en"]:
         detected_language = default_language
     return detected_language
+
+def change_volume(audio, volume_change_percent):
+    # Convert volume change from percent to dB
+    if volume_change_percent > 0:
+        volume_change_db = 20 * np.log10(1 + volume_change_percent / 100)
+    else:
+        volume_change_db = -20 * np.log10(1 - volume_change_percent / 100)
+    # Apply volume change
+    return audio + volume_change_db
 
 class Voice():
     def __init__(self, voiceSpeed = 150, volume = 0.5):
@@ -56,8 +81,8 @@ class Voice():
         return self.voiceSpeed
 
     def say(self, text, default_language):
-        thread = threading.Thread(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
-        # thread = threading.Thread(target=__speak_gtts__, args=(text, self.volume, default_language))
+        # thread = threading.Thread(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
+        thread = threading.Thread(target=__speak_gtts__, args=(text, self.volume, self.voiceSpeed, default_language))
         thread.start()
     
     def is_busy(self):

@@ -82,13 +82,15 @@ class VoiceAssistant():
         return bestSpeaker
 
 
-    def load_s2t_model(self):
-        logger.debug("Lade s2t Modell...")
-        s2t_model = Model('./speech_model/vosk-model-de-0.21/vosk-model-de-0.21') # path to model
-        logger.debug("Lade Speaker Modell...")
-        speaker_model = SpkModel('./speech_model/vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
-        logger.debug("Speaker Modelle erfolgreich geladen.")
-        self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
+    def load_s2t_model(self, load_models = False):
+        self.recognizer = None
+        if load_models:
+            logger.debug("Lade s2t Modell...")
+            s2t_model = Model('./speech_model/vosk-model-de-0.21/vosk-model-de-0.21') # path to model
+            logger.debug("Lade Speaker Modell...")
+            speaker_model = SpkModel('./speech_model/vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
+            logger.debug("Speaker Modelle erfolgreich geladen.")
+            self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
 
 
     def open_global_config(self):
@@ -159,19 +161,26 @@ class VoiceAssistant():
                 return
     
     def recognize_speech(self):
+        # Mute other devices while listening
         if self.audioplayer.is_playing():
             self.audioplayer.set_volume(self.mute_volume)
         if self.spotify.is_playing:
             self.spotify.set_volume(self.mute_volume)
-
-        thread = threading.Thread(target=self.speech_activity_detection)
-        thread.start()
+        
+        # Start 2 different threads for 2 different speech activity detections algorithms
         threshhold = 9
         thread2 = threading.Thread(target=speech_activity_detection, args=(threshhold,))
         thread2.start()
-        while thread.is_alive() and thread2.is_alive():
-            pcm = self.audio_stream.read(self.porc.frame_length)
-            self.audio_frames.append(pcm)
+        if self.recognizer is None:
+            while thread2.is_alive():
+                pcm = self.audio_stream.read(self.porc.frame_length)
+                self.audio_frames.append(pcm)
+        else:
+            thread = threading.Thread(target=self.speech_activity_detection)
+            thread.start()
+            while thread.is_alive() and thread2.is_alive():
+                pcm = self.audio_stream.read(self.porc.frame_length)
+                self.audio_frames.append(pcm)
 
 
         # Write the recorded audio data to a .wav file
