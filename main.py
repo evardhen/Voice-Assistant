@@ -20,6 +20,7 @@ from audioplayer import AudioPlayer
 from spotify_management import Spotify
 from chatbot_initialization import Chatbot
 from usb_4_mic_array.VAD import speech_activity_detection
+import global_variables
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
@@ -109,10 +110,10 @@ class VoiceAssistant():
             self.language = default_language
         logger.info('Verwende Sprache {}.', self.language)
 
-        self.tts = Voice(self.config['assistant']['voiceSpeed'], self.volume)
-        voices = self.tts.get_voice_id(self.language)
+        global_variables.tts = Voice(self.config['assistant']['voiceSpeed'], self.volume)
+        voices = global_variables.tts.get_voice_id(self.language)
         if len(voices) > 0:
-          self.tts.set_voice(voices[0])
+          global_variables.tts.set_voice(voices[0])
           logger.info('Stimme {}', voices[0])
 
     def initialize_wakeword_detection(self, device_index):
@@ -137,12 +138,12 @@ class VoiceAssistant():
     def execute_callbacks(self):
         for callback in self.callbacks:
             output = callback(False, self.language)
-            if output and not self.tts.is_busy():
+            if output and not global_variables.tts.is_busy():
                 if self.audioplayer.is_playing():
                     self.audioplayer.set_volume(self.mute_volume)
                 callback(True, self.language)
-                self.tts.say(output, self.language)
-                self.audioplayer.set_volume(self.tts.get_volume())
+                global_variables.tts.say(output, self.language)
+                self.audioplayer.set_volume(global_variables.tts.get_volume())
 
     def save_audio_to_wav(self, filename):
         wav_file = wave.open(filename, "wb")
@@ -196,7 +197,7 @@ class VoiceAssistant():
 
         output = self.intents.process(sentence)
 
-        self.tts.say(output, self.language)
+        global_variables.tts.say(output, self.language)
 
     def whisper(self, filename):
         openai.api_key = os.environ.get('OPENAI_API_KEY')
@@ -217,8 +218,8 @@ class VoiceAssistant():
                     self.recognize_speech()
                     keyword_index = -1
                                 
-                if not self.tts.is_busy() and self.spotify.is_playing:
-                    self.audioplayer.set_volume(self.tts.get_volume())
+                if not global_variables.tts.is_busy() and self.spotify.is_playing:
+                    self.audioplayer.set_volume(global_variables.tts.get_volume())
                 self.execute_callbacks()
 
         except KeyboardInterrupt:
@@ -226,8 +227,8 @@ class VoiceAssistant():
 
         finally:
             try:
-                self.volume = self.tts.volume
-                self.config['assistant']['voiceSpeed'] = self.tts.voiceSpeed
+                self.volume = global_variables.tts.volume
+                self.config['assistant']['voiceSpeed'] = global_variables.tts.voiceSpeed
                 with open(CONFIG_FILE, "w") as file:
                     yaml.dump(self.config, file, default_flow_style=False, sort_keys=False)
             except Exception as e:

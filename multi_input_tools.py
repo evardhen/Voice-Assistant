@@ -1,10 +1,13 @@
+from langchain import OpenAI
+from langchain.agents import initialize_agent, AgentType
+from langchain.tools import StructuredTool
+from typing import Optional
+
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import os
 import dotenv
-from typing import Optional
-from langchain.tools import BaseTool
-from fuzzywuzzy import fuzz
+import time
 
 dotenv.load_dotenv()
 CLIENT_ID = os.environ.get('SPOTIPY_CLIENT_ID')
@@ -12,25 +15,14 @@ CLIENT_SECRET = os.environ.get('SPOTIPY_CLIENT_SECRET')
 REDIRECT_URI = os.environ.get('SPOTIPY_REDIRECT_URI')
 SCOPE="user-read-playback-state,user-modify-playback-state,user-read-private,user-read-email,playlist-read-private,playlist-read-collaborative,user-library-read"
 
-class CustomSpotifyTool(BaseTool):
-    name = "custom_spotify_playback"
-    description = "Lets you specify a song, artist, album, or playlist to play on Spotify. The 4 categories are captured in a string and comma separated without spaces. The order of the categories is always song, artist, album, playlist. If one of the categories is empty, the part of the string should display \"null\" as string. An example string is \"null, Ed Sheeran, null, null\n."
+# os.environ["LANGCHAIN_TRACING"] = "true"
 
-    def _run(self, string) -> str:
-        return parsing_spotify_player(string)
-    def _arun(self, string) -> str:
-        raise NotImplementedError("This tool does not support async")
-
-def parsing_spotify_player(string):
-    a, b, c, d = (part.strip() for part in string.split(","))
-    return spotify_player(str(a), str(b), str(c), str(d))
-
-def spotify_player(song_title: Optional[str] = None, artist_name: Optional[str] = None, album_name: Optional[str] = None, playlist_name: Optional[str] = None) -> str:
+def spotify_playback(song_title: Optional[str] = None, artist_name: Optional[str] = None, album_name: Optional[str] = None, playlist_name: Optional[str] = None) -> str:
     """
-    Lets you specify a song, artist, album, or playlist to play on Spotify.
+    Lets you specify a song, artist, album, or playlist to play on Spotify. The inputs are optional and each input variable is a separate string without json formatting.
     """
     try:
-        spotify_player = SpotifyPlayer()
+        spotify_player = CustomSpotifyPlayer()
     except Exception as e:
         return f"Error: {e}"
     if song_title and artist_name and song_title != "null" and artist_name != "null":
@@ -49,7 +41,8 @@ def spotify_player(song_title: Optional[str] = None, artist_name: Optional[str] 
         song_info = spotify_player.play_playlist(playlist_name)
         return "Playing songs from the playlist " + playlist_name + "5\n"
 
-class SpotifyPlayer:
+
+class CustomSpotifyPlayer:
     def __init__(self):
         SPOTIFY_AUTH=SpotifyOAuth(client_id=CLIENT_ID, client_secret=CLIENT_SECRET, redirect_uri=REDIRECT_URI, scope=SCOPE)
         ACCESS_TOKEN = SPOTIFY_AUTH.get_access_token(as_dict=False)
@@ -134,16 +127,29 @@ class SpotifyPlayer:
         return results["albums"]["items"][0]
 
     def play_playlist(self, playlist_name):
-        # Search for the playlist in current users playlists first
-        playlists = self.sp.current_user_playlists()
-        for playlist in playlists['items']:
-            ratio = fuzz.ratio(playlist['name'].lower(), playlist_name.lower())
-            if ratio > 70:
-                self.sp.start_playback(device_id=self.device_id, context_uri=playlist["uri"])
-                return (playlist['name'])
-            
-        # Search for all playlists
+        # Search for the playlist
         results = self.sp.search(q=playlist_name, limit=1, type="playlist")
+
+        # Get the first playlist from the search results
         playlist_uri = results["playlists"]["items"][0]["uri"]
+
+        # Start playback
         self.sp.start_playback(device_id=self.device_id, context_uri=playlist_uri)
         return results["playlists"]["items"][0]
+    
+
+if __name__ == "__main__":
+    llm = OpenAI(temperature=0)
+        
+    tool = StructuredTool.from_function(spotify_playback)
+    # Structured tools are compatible with the STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION agent type.
+    agent_executor = initialize_agent(
+        [tool],
+        llm,
+        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
+    )
+    agent_executor.run("Play Perfect from Ed Sheeran on Spotify.")
+    time.sleep(10)
+    agent_executor.run("Can you play that song again?")
+

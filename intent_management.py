@@ -3,8 +3,6 @@ from langchain.agents import load_tools, OpenAIFunctionsAgent, AgentExecutor
 from langchain.prompts import MessagesPlaceholder
 from langchain.schema import SystemMessage
 from langchain.memory import ConversationBufferMemory
-from langchain.tools import Tool
-from langchain.utilities import GoogleSearchAPIWrapper
 
 import glob
 import os
@@ -16,13 +14,14 @@ import dotenv
 
 from intents.spotify_intent import CustomSpotifyTool
 from intents.image_identification_intent import ImageCaptionTool
+from intents.google_search_intent import CustomGoogleSearchTool
+from intents.volume_intent import CustomChangeVolumeTool
 
-SYSTEM_MESSAGE = SystemMessage(content="Assistant is a large language model trained by OpenAI. Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics." \
-                               "As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand. Assistant is" \
-                               "constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions." \
-                               "Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics. Unfortunately, Assistant is terrible at maths." \
-                               "When provided with math questions, no matter how simple, assistant always refers to it's trusty tools and absolutely does NOT try to answer math questions by itself. Overall, Assistant is a powerful system that can help with a wide range of" \
-                               "tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist. Assistant always gives short answers, with no more than 4 sentences.")
+SYSTEM_MESSAGE = SystemMessage(content="Luna is a large language model trained by OpenAI. Luna is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics." \
+                               "As a language model, Luna is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide accurate and informative responses that are coherent and relevant to the topic at hand. Luna is" \
+                               "constantly learning and improving, and its capabilities are constantly evolving. Luna is located in the ZEKI office kitchen at Technische Universität Berlin. Therefore, it either answers in german or english. Luna always gives very short answers, with no more than 100 words." \
+                               "When provided with a question or any other input, no matter how simple, Luna always refers to its trusty tools and absolutely does NOT try to answer questions by itself. If Luna cannot associate an input or question with one of its tools, it gives a very short response, asking the user to repeat the question." \
+                                "Overall, Luna is a powerful system that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Luna is here to assist.")
 
 
 class IntentManagement():
@@ -39,21 +38,23 @@ class IntentManagement():
     def initialize_llm(self):
         dotenv.load_dotenv()
         llm = ChatOpenAI(temperature=0)
-        tools = load_tools(["llm-math", "google-search"], llm=llm)
-        
-        # search = GoogleSearchAPIWrapper()
-        # tools.append(
-        #     Tool.from_function(
-        #         func=search.run,
-        #         name="Google Search",
-        #         description="Search Google for recent results. Especially helpful, whenever information about people or current events are requested.",
-        #     )
-        # )
-        tools.extend([CustomSpotifyTool(), ImageCaptionTool()])
+
+        # Load predefined tools
+        tools = load_tools(["llm-math"], llm=llm)
+        # tools = load_tools(["llm-math", "google-search"], llm=llm)
+
+        # Load custom tools/intents
+        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomChangeVolumeTool()])
+
+        # Create a prompt
         prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
+        
+        # Set up memory
         memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
+        # Create agent to select correct intent
         agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
+
         self.agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
    
     def import_modules(self):
