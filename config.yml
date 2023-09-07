@@ -4,4 +4,4 @@ assistant:
   - Hey Luna
   allow_only_known_speaker: 'True'
   volume: 1.0
-  voiceSpeed: 1.22
+  voiceSpeed: 170.0
