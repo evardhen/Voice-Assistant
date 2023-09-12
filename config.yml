@@ -2,6 +2,7 @@ assistant:
   language: de
   wakewords:
   - Hey Luna
+  is_vosk_model: false
   allow_only_known_speaker: 'True'
   volume: 1.0
   voiceSpeed: 170.0

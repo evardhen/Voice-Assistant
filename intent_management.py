@@ -15,8 +15,10 @@ import dotenv
 from intents.spotify_intent import CustomSpotifyTool
 from intents.image_identification_intent import ImageCaptionTool
 from intents.google_search_intent import CustomGoogleSearchTool
-from intents.volume_intent import CustomChangeVolumeTool
-from intents.voice_speed_intent import CustomChangeVoiceSpeedTool
+from intents.set_volume_intent import CustomSetVolumeTool
+from intents.get_volume_intent import CustomGetVolumeTool
+from intents.set_voice_speed_intent import CustomSetVoiceSpeedTool
+from intents.get_voice_speed_intent import CustomGetVoiceSpeedTool
 
 SYSTEM_MESSAGE = SystemMessage(content="Luna is a large language model trained by OpenAI. Luna is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics." \
                                "As a language model, Luna is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide accurate and informative responses that are coherent and relevant to the topic at hand. Luna is" \
@@ -31,9 +33,9 @@ class IntentManagement():
         self.dynamic_intents = []
         self.va = va
         self.language = va.config['assistant']['language']
-        logger.debug("Starte intent management...")
+        logger.debug("Starting intent management...")
 
-        self.import_modules()
+        self.load_intents()
         self.initialize_llm()
 
     def initialize_llm(self):
@@ -45,7 +47,7 @@ class IntentManagement():
         # tools = load_tools(["llm-math", "google-search"], llm=llm)
 
         # Load custom tools/intents
-        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomChangeVolumeTool(), CustomChangeVoiceSpeedTool()])
+        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), CustomGetVoiceSpeedTool()])
 
         # Create a prompt
         prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
@@ -58,32 +60,30 @@ class IntentManagement():
 
         self.agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
    
-    def import_modules(self):
-        # load files from intents/functions/ folder
-        function_folders = [os.path.abspath(name) for name in glob.glob("./intents/functions/*/")]
-        for folder in function_folders:
-            intent_files = glob.glob(os.path.join(folder, "intent_*.py"))
-            for file in intent_files:
-                name = file.strip(".py")
-                name = "intents.functions." + Path(folder).name + ".intent_" + Path(folder).name
-                name = name.replace(os.path.sep, ".")
-                globals()[Path(folder).name] = importlib.import_module(name)
-                logger.debug("Modul {} geladen.", str(Path(folder).name))
-                self.dynamic_intents.append(Path(folder).name)
+    def load_intents(self):
+        # load files from intents/ folder
+        intent_folder = [os.path.abspath(name) for name in glob.glob("./intents/")]
+        intent_files = glob.glob(os.path.join(intent_folder[0], "*_intent.py"))
+        for file in intent_files:
+            name = 'intents.' + Path(file).stem
+            globals()[Path(file).name] = importlib.import_module(name)
+            logger.debug("Module {} recognized.", str(Path(file).name))
+            self.dynamic_intents.append(Path(file).name)
 
     def process(self, query):
         return self.agent_executor.run(query)
 
 
     def register_callbacks(self):
-		# Registriere alle Callback Funktionen
-        logger.info("Registriere Callbacks...")
+		# Register all callback functions
+        logger.info("Register callback intents...")
         callbacks = []
-        for folder in [os.path.abspath(name) for name in glob.glob("./intents/functions/*/")]:
-            module_name = "intents.functions." + Path(folder).name + ".intent_" + Path(folder).name
+        intent_folder = [os.path.abspath(name) for name in glob.glob("./intents/")]
+        intent_files = glob.glob(os.path.join(intent_folder[0], "*_intent.py"))
+        for file in intent_files:
+            module_name = 'intents.' + Path(file).stem
             module_obj = sys.modules[module_name]
-            logger.debug("Verarbeite Modul {}...", module_name)
             if hasattr(module_obj, 'callback'):
-                logger.info('Registriere Callback für {}.', module_name)
+                logger.info('Register callback for: {}.', module_name)
                 callbacks.append(getattr(module_obj, 'callback'))
         return callbacks

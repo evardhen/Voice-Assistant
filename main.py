@@ -1,3 +1,4 @@
+import argparse
 from loguru import logger
 import yaml
 import sys
@@ -14,15 +15,13 @@ import dotenv
 import openai
 
 from voice_management import Voice
-from user_management import UserManagement
 from intent_management import IntentManagement
 from audioplayer import AudioPlayer
-from spotify_management import Spotify
 from chatbot_initialization import Chatbot
+from spotify_management import Spotify
 from usb_4_mic_array.VAD import speech_activity_detection
 import global_variables
 
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 CONFIG_FILE = 'config.yml'
 KEYWORD_PATH = os.path.abspath(os.path.join(".", "custom_wakewords", "Hey-Luna_de_windows_v2_2_0.ppn"))
 MODEL_FILE_PATH = os.path.abspath(os.path.join(".", "custom_wakewords", "porcupine_params_de.pv"))
@@ -33,28 +32,59 @@ class VoiceAssistant():
         global CONFIG_FILE
         self.audio_frames = []
         self.default_wakeword = 'Hey Luna'
-        # device_index = 2 # select correct microphone (for PC)
-        device_index = 1 # select correct microphone (for laptop)
         self.is_listening = False
         self.mute_volume = 0.1
+        self.recognizer = None
 
         dotenv.load_dotenv()
+        microphone_index = self.select_microphone()
         self.open_global_config()
         self.initialize_voice()
         self.initialize_chatbot()
-        self.initialize_wakeword_detection(device_index)
-        self.load_s2t_model()
-        self.initialize_user_mgmt()
+        self.initialize_spotify()
+        self.initialize_wakeword_detection(microphone_index)
+        if self.config['assistant']['is_vosk_model']:
+            self.load_vosk_model()
         self.initialize_intents()
         self.initialize_music_stream()
-        self.initialize_spotify()
-        logger.debug("Initialisierung abgeschlossen.")
+        logger.debug("Initialization completed.")
+
+    def select_microphone(self):
+        self.pyAudio = pyaudio.PyAudio()
+        parser = argparse.ArgumentParser(description='Select microphone.')
+        parser.add_argument('-m', '--microphone', type=int, help='Index of the microphone to use')
+
+        args = parser.parse_args()
+
+        if args.microphone is not None:
+            selected_microphone = args.microphone
+        else:
+            selected_microphone = None
+
+            # Print available microphones
+            print("\nList of available microphones:\n")
+            for i in range(self.pyAudio.get_device_count()):
+                device_info = self.pyAudio.get_device_info_by_index(i)
+                print(f"Device {i}: {device_info['name']} (Sample Rate: {device_info['defaultSampleRate']} Hz, Channels: {device_info['maxInputChannels']})")
+
+            # Ask user to select a microphone
+            while selected_microphone is None:
+                try:
+                    selected_microphone = int(input("\nEnter the index of the microphone you want to use: "))
+                    if not (0 <= selected_microphone < self.pyAudio.get_device_count()):
+                        print(f"Invalid microphone index. Please select an index between 0 and {self.pyAudio.get_device_count()}.")
+                        selected_microphone = None
+                except ValueError:
+                    print("Invalid input format. Please enter a valid microphone index as an integer.")
+
+        return selected_microphone
+
+
+    def initialize_spotify(self):
+        self.spotify = Spotify()
 
     def initialize_chatbot(self):
         self.chatbot = Chatbot(self.language)
-
-    def initialize_spotify(self):
-        self.spotify = Spotify(self.volume)
 
     def initialize_music_stream(self):
         self.audioplayer = AudioPlayer(self.volume)
@@ -63,42 +93,19 @@ class VoiceAssistant():
         self.intents = IntentManagement(self)
         self.callbacks = self.intents.register_callbacks()
 
-    def initialize_user_mgmt(self):
-        self.user_mgmt = UserManagement()
-        self.allow_known_speaker = self.config['assistant']['allow_only_known_speaker']
-
-    def detect_speaker(self, inputSpeaker):
-        # TODO: Not yet working properly, because the qualitiy of the recorded microphone
-        # data varies a lot
-        bestSpeaker = None
-        bestCosDIst = 1.1
-        for speaker in self.user_mgmt.speaker_table.all():
-            nx = np.array(speaker.get('voice'))
-            ny = np.array(inputSpeaker)
-            cosDist = 1 - np.dot(nx, ny) / (np.linalg.norm(nx) * np.linalg.norm(ny))
-            logger.debug("Cosine similarity: {}", cosDist)
-            if(cosDist < bestCosDIst and cosDist < 0.7): # always between 0 and 1
-                bestCosDIst = cosDist
-                bestSpeaker = speaker.get('name')
-        return bestSpeaker
-
-
-    def load_s2t_model(self, load_models = False):
-        self.recognizer = None
-        if load_models:
-            logger.debug("Lade s2t Modell...")
-            s2t_model = Model('./speech_model/vosk-model-de-0.21/vosk-model-de-0.21') # path to model
-            logger.debug("Lade Speaker Modell...")
-            speaker_model = SpkModel('./speech_model/vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
-            logger.debug("Speaker Modelle erfolgreich geladen.")
-            self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
-
+    def load_vosk_model(self):
+        logger.debug("Lade s2t Modell...")
+        s2t_model = Model('./speech_model/vosk-model-de-0.21/vosk-model-de-0.21') # path to model
+        logger.debug("Lade Speaker Modell...")
+        speaker_model = SpkModel('./speech_model/vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
+        logger.debug("Speaker Modelle erfolgreich geladen.")
+        self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
 
     def open_global_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as file:
             try:
                 self.config = yaml.load(file, Loader=yaml.FullLoader)
-                logger.debug('YAML Datei erfolgreich geladen.')
+                logger.debug('Global Config (YAML) file loaded successfully.')
             except yaml.YAMLError as exc:
                 logger.error(exc)
                 sys.exit(1)
@@ -108,31 +115,29 @@ class VoiceAssistant():
         self.language = self.config['assistant']['language']
         if not self.language:
             self.language = default_language
-        logger.info('Verwende Sprache {}.', self.language)
+        logger.info('Use language: {}.', self.language)
 
         global_variables.tts = Voice(self.config['assistant']['voiceSpeed'], self.volume)
         voices = global_variables.tts.get_voice_id(self.language)
         if len(voices) > 0:
           global_variables.tts.set_voice(voices[0])
-          logger.info('Stimme {}', voices[0])
+          logger.info('Active pytts voice: {}', voices[0])
 
     def initialize_wakeword_detection(self, device_index):
-        logger.debug("Starte Wakeword Erkennung.")
+        logger.debug("Starting wake word detection....")
         self.wakewords = self.config['assistant']['wakewords']
         if not self.wakewords:
              self.wakewords = [self.default_wakeword]
-        logger.debug('Wakewords sind {}', ', '.join( self.wakewords))
+        logger.debug('Wake words are: {}', ', '.join( self.wakewords))
 
         # print(pvporcupine.KEYWORDS)
         dotenv.load_dotenv()
         PICOVOICE_KEY = os.environ.get('PICOVOICE_KEY')
         self.porc = pvporcupine.create(access_key=PICOVOICE_KEY, keyword_paths=[KEYWORD_PATH], model_path=MODEL_FILE_PATH)
-        self.pyAudio = pyaudio.PyAudio()
         # # select correct microphone
         # for i in range(self.pyAudio.get_device_count()):
         #     device_info = self.pyAudio.get_device_info_by_index(i)
         #     print(f"Device {i}: {device_info['name']} (Sample Rate: {device_info['defaultSampleRate']} Hz, Channels: {device_info['maxInputChannels']})")
-        logger.debug("Sample rate: {}", self.porc.sample_rate)
         self.audio_stream = self.pyAudio.open(rate = self.porc.sample_rate, channels=1, format = pyaudio.paInt16, input=True, frames_per_buffer=self.porc.frame_length, input_device_index= device_index)
 
     def execute_callbacks(self):
@@ -165,7 +170,7 @@ class VoiceAssistant():
         # Mute other devices while listening
         if self.audioplayer.is_playing():
             self.audioplayer.set_volume(self.mute_volume)
-        if self.spotify.is_playing:
+        if self.spotify.is_playing():
             self.spotify.set_volume(self.mute_volume)
         
         # Start 2 different threads for 2 different speech activity detections algorithms
@@ -218,7 +223,7 @@ class VoiceAssistant():
                     self.recognize_speech()
                     keyword_index = -1
                                 
-                if not global_variables.tts.is_busy() and self.spotify.is_playing:
+                if not global_variables.tts.is_busy() and self.spotify.is_playing():
                     self.audioplayer.set_volume(global_variables.tts.get_volume())
                 self.execute_callbacks()
 
