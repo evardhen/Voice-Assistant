@@ -1,17 +1,16 @@
 import argparse
+import sys
+import os
+import threading
 from loguru import logger
 import yaml
-import sys
 import pyaudio
-import pvporcupine
 import struct
-from vosk import Model, SpkModel, KaldiRecognizer
-import sys
-import numpy as np
-import os
 import wave
-import threading
 import dotenv
+
+import pvporcupine
+from vosk import Model, SpkModel, KaldiRecognizer
 import openai
 
 from voice_management import Voice
@@ -129,15 +128,10 @@ class VoiceAssistant():
         if not self.wakewords:
              self.wakewords = [self.default_wakeword]
         logger.debug('Wake words are: {}', ', '.join( self.wakewords))
-
         # print(pvporcupine.KEYWORDS)
-        dotenv.load_dotenv()
+
         PICOVOICE_KEY = os.environ.get('PICOVOICE_KEY')
         self.porc = pvporcupine.create(access_key=PICOVOICE_KEY, keyword_paths=[KEYWORD_PATH], model_path=MODEL_FILE_PATH)
-        # # select correct microphone
-        # for i in range(self.pyAudio.get_device_count()):
-        #     device_info = self.pyAudio.get_device_info_by_index(i)
-        #     print(f"Device {i}: {device_info['name']} (Sample Rate: {device_info['defaultSampleRate']} Hz, Channels: {device_info['maxInputChannels']})")
         self.audio_stream = self.pyAudio.open(rate = self.porc.sample_rate, channels=1, format = pyaudio.paInt16, input=True, frames_per_buffer=self.porc.frame_length, input_device_index= device_index)
 
     def execute_callbacks(self):
@@ -190,10 +184,10 @@ class VoiceAssistant():
 
 
         # Write the recorded audio data to a .wav file
-        self.save_audio_to_wav("./recorded_audio.wav")
+        self.save_audio_to_wav("./audios/recorded_audio.wav")
         self.audio_frames = []
 
-        sentence = self.whisper("./recorded_audio.wav")
+        sentence = self.whisper("./audios/recorded_audio.wav")
 
         # result = json.loads(self.recognizer.Result())
         # # logger.info('Result: {}', result)
@@ -211,7 +205,8 @@ class VoiceAssistant():
         return transcript.text
 
     def run(self):
-        logger.info("VoiceAssistant gestartet...")
+        print("\n")
+        logger.info("VoiceAssistant started...")
         try:
             while True:
                 pcm = self.audio_stream.read(self.porc.frame_length)
@@ -228,7 +223,8 @@ class VoiceAssistant():
                 self.execute_callbacks()
 
         except KeyboardInterrupt:
-            logger.info("Prozess durch Keyboard unterbrochen.")
+            print("\n")
+            logger.info("Process interrupted by keyboard.")
 
         finally:
             try:
@@ -237,9 +233,9 @@ class VoiceAssistant():
                 with open(CONFIG_FILE, "w") as file:
                     yaml.dump(self.config, file, default_flow_style=False, sort_keys=False)
             except Exception as e:
-                logger.error("Konnte config.yaml nicht lesem: {}", e)
+                logger.error("Could not read config.yaml: {}", e)
 
-            logger.debug('Beende offene Pakete...')
+            logger.debug('Closing open packages...')
             if self.porc:
                 self.porc.delete()
             if self.audio_stream is not None:

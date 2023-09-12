@@ -9,8 +9,8 @@ import soundfile as sf
 from pydub import AudioSegment
 from pydub.effects import speedup
 
-
-SPEECH_FILE_PATH = "output.mp3"
+SPEECH_FILE_PATH = "./audios/gtts_output.mp3"
+MODIFIED_SPEECH_FILE_PATH = "./audios/gtts_output_modified.wav"
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -44,12 +44,10 @@ def __speak_gtts__(text, volume, pytts_speed, default_language):
     elif gtts_speed < 1:
         logger.error(f"Value out of range for voice speed: {gtts_speed}, only allowed between 1. and 1.33!")
         
-    outfile_path = "./output_modified.wav"
-    outfile_format = "wav"
-    audio.export(outfile_path, format=outfile_format)
+    audio.export(MODIFIED_SPEECH_FILE_PATH, format="wav")
 
     # Read the wav file
-    data, fs = sf.read(outfile_path)
+    data, fs = sf.read(MODIFIED_SPEECH_FILE_PATH)
     # Play the audio
     sd.play(data, fs)
     sd.wait()

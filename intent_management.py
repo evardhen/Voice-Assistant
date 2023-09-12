@@ -9,7 +9,6 @@ import os
 from loguru import logger
 from pathlib import Path
 import sys
-import importlib
 import dotenv
 
 from intents.spotify_intent import CustomSpotifyTool
@@ -35,7 +34,6 @@ class IntentManagement():
         self.language = va.config['assistant']['language']
         logger.debug("Starting intent management...")
 
-        self.load_intents()
         self.initialize_llm()
 
     def initialize_llm(self):
@@ -59,16 +57,6 @@ class IntentManagement():
         agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
 
         self.agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
-   
-    def load_intents(self):
-        # load files from intents/ folder
-        intent_folder = [os.path.abspath(name) for name in glob.glob("./intents/")]
-        intent_files = glob.glob(os.path.join(intent_folder[0], "*_intent.py"))
-        for file in intent_files:
-            name = 'intents.' + Path(file).stem
-            globals()[Path(file).name] = importlib.import_module(name)
-            logger.debug("Module {} recognized.", str(Path(file).name))
-            self.dynamic_intents.append(Path(file).name)
 
     def process(self, query):
         return self.agent_executor.run(query)
