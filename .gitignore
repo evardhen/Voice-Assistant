@@ -13,3 +13,4 @@ usb_4_mic_array/
 speech_model/
 pictures/
 audios/*
+!audios/
