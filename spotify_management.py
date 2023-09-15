@@ -4,6 +4,7 @@ import os
 import dotenv
 from loguru import logger
 import yaml
+import time
 
 class Spotify():
     def __init__(self):
@@ -22,7 +23,9 @@ class Spotify():
         Method 2:
         Load environment variables from .env file
         """
-
+        self._is_playing = False
+        self.is_playing_time_limit = 180 # In seconds, timer for how often the variables is_playing is updated
+        self.is_playing_current_time = time.time()
         dotenv.load_dotenv()
 
         # Get the spotify credentials from environment variables
@@ -47,7 +50,7 @@ class Spotify():
 
     def stop(self):
         self.sp.pause_playback(device_id=self.device_id)
-        self.is_playing = False
+        self._is_playing = False
 
     def _volume_abs_to_percent(self, volume):
         if volume > 2:
@@ -64,11 +67,20 @@ class Spotify():
         logger.debug("Spotify volume changed to {} percent.", self.volume_percent)
 
     def is_playing(self):
+        self._update_is_playing()
+        print(self._is_playing)
+        return self._is_playing
+    
+    def _update_is_playing(self):
+        if time.time() - self.is_playing_current_time < self.is_playing_time_limit:
+            return
+        print("Updating is_playing...")
         current_playback = self.sp.current_playback()
         if current_playback is not None and current_playback['is_playing']:
-            return True
+            self._is_playing = True
         else:
-            return False
+            self._is_playing = False
+
 
 if __name__ == '__main__':
     sp = Spotify(0.3)

@@ -80,7 +80,7 @@ class VoiceAssistant():
 
 
     def initialize_spotify(self):
-        self.spotify = Spotify()
+        global_variables.spotify = Spotify()
 
     def initialize_chatbot(self):
         self.chatbot = Chatbot(self.language)
@@ -163,9 +163,13 @@ class VoiceAssistant():
     def recognize_speech(self):
         # Mute other devices while listening
         if self.audioplayer.is_playing():
+            logger.debug(f"Set audioplayer volume to mute volume: {self.mute_volume}")
             self.audioplayer.set_volume(self.mute_volume)
-        if self.spotify.is_playing():
-            self.spotify.set_volume(self.mute_volume)
+        methods_list = dir(global_variables.spotify)
+        print(methods_list)
+        if global_variables.spotify.is_playing():
+            logger.debug(f"Set spotify volume to mute volume: {self.mute_volume}")
+            global_variables.spotify.set_volume(self.mute_volume)
         
         # Start 2 different threads for 2 different speech activity detections algorithms
         threshhold = 9
@@ -205,21 +209,17 @@ class VoiceAssistant():
         return transcript.text
 
     def run(self):
-        print("\n")
         logger.info("VoiceAssistant started...")
         try:
             while True:
                 pcm = self.audio_stream.read(self.porc.frame_length)
-
                 pcm_unpacked =  struct.unpack_from("h" * self.porc.frame_length, pcm)
                 keyword_index = self.porc.process(pcm_unpacked)
                 if keyword_index >= 0: # -1, if no keyword was detected
-                    logger.info("Wakeword '{}' erkannt. Wie kann ich dir helfen?",  self.wakewords[keyword_index])
+                    logger.info("Wakeword '{}' detected. How can I help you?",  self.wakewords[keyword_index])
                     self.recognize_speech()
                     keyword_index = -1
                                 
-                if not global_variables.tts.is_busy() and self.spotify.is_playing():
-                    self.audioplayer.set_volume(global_variables.tts.get_volume())
                 self.execute_callbacks()
 
         except KeyboardInterrupt:

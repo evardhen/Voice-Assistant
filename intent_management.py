@@ -10,6 +10,7 @@ from loguru import logger
 from pathlib import Path
 import sys
 import dotenv
+import importlib
 
 from intents.spotify_intent import CustomSpotifyTool
 from intents.image_identification_intent import ImageCaptionTool
@@ -70,6 +71,7 @@ class IntentManagement():
         intent_files = glob.glob(os.path.join(intent_folder[0], "*_intent.py"))
         for file in intent_files:
             module_name = 'intents.' + Path(file).stem
+            globals()[Path(file).name] = importlib.import_module(module_name)
             module_obj = sys.modules[module_name]
             if hasattr(module_obj, 'callback'):
                 logger.info('Register callback for: {}.', module_name)

@@ -6,6 +6,8 @@ from typing import Optional
 from langchain.tools import BaseTool
 from fuzzywuzzy import fuzz
 
+import global_variables 
+
 dotenv.load_dotenv()
 CLIENT_ID = os.environ.get('SPOTIPY_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('SPOTIPY_CLIENT_SECRET')
@@ -31,23 +33,29 @@ def spotify_player(song_title: Optional[str] = None, artist_name: Optional[str] 
     """
     try:
         spotify_player = SpotifyPlayer()
+
+        if song_title and artist_name and song_title != "null" and artist_name != "null":
+            song_info = spotify_player.play_song_from_artist(song_title, artist_name)
+            global_variables.spotify.is_playing = True
+            return f"Playing {song_info['name']} by {song_info['artists'][0]['name']} 1 \n"
+        if song_title and song_title != "null":
+            song_info = spotify_player.play_song(song_title)
+            global_variables.spotify.is_playing = True
+            return f"Playing {song_info['name']} by {song_info['artists'][0]['name']} 2 \n"
+        if artist_name and artist_name != "null":
+            song_info = spotify_player.play_artist(artist_name)
+            global_variables.spotify.is_playing = True
+            return "Playing songs by " + artist_name + "3\n"
+        if album_name and album_name != "null":
+            song_info = spotify_player.play_album(album_name)
+            global_variables.spotify.is_playing = True
+            return "Playing the album " + album_name + "4\n"
+        if playlist_name and playlist_name != "null":
+            song_info = spotify_player.play_playlist(playlist_name)
+            global_variables.spotify.is_playing = True
+            return "Playing songs from the playlist " + playlist_name + "5\n"
     except Exception as e:
-        return f"Error: {e}"
-    if song_title and artist_name and song_title != "null" and artist_name != "null":
-        song_info = spotify_player.play_song_from_artist(song_title, artist_name)
-        return f"Playing {song_info['name']} by {song_info['artists'][0]['name']} 1 \n"
-    if song_title and song_title != "null":
-        song_info = spotify_player.play_song(song_title)
-        return f"Playing {song_info['name']} by {song_info['artists'][0]['name']} 2 \n"
-    if artist_name and artist_name != "null":
-        song_info = spotify_player.play_artist(artist_name)
-        return "Playing songs by " + artist_name + "3\n"
-    if album_name and album_name != "null":
-        song_info = spotify_player.play_album(album_name)
-        return "Playing the album " + album_name + "4\n"
-    if playlist_name and playlist_name != "null":
-        song_info = spotify_player.play_playlist(playlist_name)
-        return "Playing songs from the playlist " + playlist_name + "5\n"
+        return f"Error in spotify_intent: {e}"
 
 class SpotifyPlayer:
     def __init__(self):
@@ -68,9 +76,11 @@ class SpotifyPlayer:
         try:
             self.device_id = self.devices["devices"][0]["id"]
             if not self.device_id:
-                raise Exception("No device found, please make sure you have one connected")
+                raise Exception("No device found, please make sure you have one connected.")
         except Exception as e:
             raise Exception("Can't get device id: " + str(e))
+        
+        global_variables.spotify.set_volume(global_variables.tts.get_volume())
         
 
 
