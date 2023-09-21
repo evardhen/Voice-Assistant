@@ -8,4 +8,13 @@ The language is currently set to german, as are the logging comments. The langua
 
 In the wakeword_detection() function in the main file, you have to select the correct microphone. You can identify it by commenting in the block and run the main. Afterwards, you have to adapt the microphone in the init of class VoiceAssistant().  
 
-Currently, there are 6 intents implemented. A Wikipedia search, a time module, a reminder a stop module, a web radio player and a spotify player.
+Currently, there are 6 intents implemented. 
+- Google search
+- Get Volume
+- Change Volume
+- Get Voice Speed
+- Change Voice Speed
+- Get Time
+- Image description
+- Get Date
+- Spotify player

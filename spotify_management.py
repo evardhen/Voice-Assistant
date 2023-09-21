@@ -66,14 +66,15 @@ class Spotify():
         self.sp.volume(volume_percent=self.volume_percent, device_id=self.device_id)
         logger.debug("Spotify volume changed to {} percent.", self.volume_percent)
 
-    def is_playing(self):
+    def is_spotify_playing(self):
         self._update_is_playing()
-        print(self._is_playing)
         return self._is_playing
     
     def _update_is_playing(self):
-        if time.time() - self.is_playing_current_time < self.is_playing_time_limit:
+        if time.time() - self.is_playing_current_time < self.is_playing_time_limit or self._is_playing == False:
             return
+        
+        self.is_playing_current_time = time.time()
         print("Updating is_playing...")
         current_playback = self.sp.current_playback()
         if current_playback is not None and current_playback['is_playing']:

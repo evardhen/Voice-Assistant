@@ -165,9 +165,7 @@ class VoiceAssistant():
         if self.audioplayer.is_playing():
             logger.debug(f"Set audioplayer volume to mute volume: {self.mute_volume}")
             self.audioplayer.set_volume(self.mute_volume)
-        methods_list = dir(global_variables.spotify)
-        print(methods_list)
-        if global_variables.spotify.is_playing():
+        if global_variables.spotify.is_spotify_playing():
             logger.debug(f"Set spotify volume to mute volume: {self.mute_volume}")
             global_variables.spotify.set_volume(self.mute_volume)
         

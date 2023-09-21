@@ -19,6 +19,9 @@ from intents.set_volume_intent import CustomSetVolumeTool
 from intents.get_volume_intent import CustomGetVolumeTool
 from intents.set_voice_speed_intent import CustomSetVoiceSpeedTool
 from intents.get_voice_speed_intent import CustomGetVoiceSpeedTool
+from intents.get_date_intent import CustomGetDateTool
+from intents.get_time_intent import CustomGetTimeTool
+from intents.get_temperature_intent import CustomGetTemperatureTool
 
 SYSTEM_MESSAGE = SystemMessage(content="Luna is a large language model trained by OpenAI. Luna is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics." \
                                "As a language model, Luna is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide accurate and informative responses that are coherent and relevant to the topic at hand. Luna is" \
@@ -46,7 +49,7 @@ class IntentManagement():
         # tools = load_tools(["llm-math", "google-search"], llm=llm)
 
         # Load custom tools/intents
-        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), CustomGetVoiceSpeedTool()])
+        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool()])
 
         # Create a prompt
         prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
