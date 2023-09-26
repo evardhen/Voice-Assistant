@@ -17,4 +17,5 @@ Currently, there are 6 intents implemented.
 - Get Time
 - Image description
 - Get Date
+- Get Temperature
 - Spotify player

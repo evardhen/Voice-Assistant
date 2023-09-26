@@ -1,6 +1,0 @@
-intent:
-    get_volume:
-        de:
-            current_volume: ["Lautstärke ist auf {} eingestellt."]
-        en:
-            current_volume: ["Volume is set to {}."]

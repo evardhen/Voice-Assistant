@@ -16,7 +16,6 @@ import openai
 from voice_management import Voice
 from intent_management import IntentManagement
 from audioplayer import AudioPlayer
-from chatbot_initialization import Chatbot
 from spotify_management import Spotify
 from usb_4_mic_array.VAD import speech_activity_detection
 import global_variables
@@ -31,7 +30,6 @@ class VoiceAssistant():
         global CONFIG_FILE
         self.audio_frames = []
         self.default_wakeword = 'Hey Luna'
-        self.is_listening = False
         self.mute_volume = 0.1
         self.recognizer = None
 
@@ -39,7 +37,6 @@ class VoiceAssistant():
         microphone_index = self.select_microphone()
         self.open_global_config()
         self.initialize_voice()
-        self.initialize_chatbot()
         self.initialize_spotify()
         self.initialize_wakeword_detection(microphone_index)
         if self.config['assistant']['is_vosk_model']:
@@ -81,9 +78,6 @@ class VoiceAssistant():
 
     def initialize_spotify(self):
         global_variables.spotify = Spotify()
-
-    def initialize_chatbot(self):
-        self.chatbot = Chatbot(self.language)
 
     def initialize_music_stream(self):
         self.audioplayer = AudioPlayer(self.volume)

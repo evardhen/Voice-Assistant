@@ -80,3 +80,28 @@ class IntentManagement():
                 logger.info('Register callback for: {}.', module_name)
                 callbacks.append(getattr(module_obj, 'callback'))
         return callbacks
+    
+    if __name__ == "__main__":
+        dotenv.load_dotenv()
+        llm = ChatOpenAI(temperature=0)
+
+        # Load predefined tools
+        tools = load_tools(["llm-math"], llm=llm)
+        # tools = load_tools(["llm-math", "google-search"], llm=llm)
+
+        # Load custom tools/intents
+        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool()])
+
+        SYSTEM_MESSAGE_2 = SystemMessage(content="Luna is a large language model trained by OpenAI. Luna is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics.")
+        # Create a prompt
+        prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE_2, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
+        
+        # Set up memory
+        memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
+        # Create agent to select correct intent
+        agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
+
+        agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
+        query = "Kennst du Sahin Al-Bairaq von der Technsichen Universität Berlin?"
+        agent_executor.run(query)

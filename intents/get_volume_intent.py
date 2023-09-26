@@ -14,6 +14,6 @@ class CustomGetVolumeTool(BaseTool):
 def get_volume():
     try:
         volume = global_variables.tts.get_volume()
-        return volume
+        return str(volume)
     except:
         return "An unhandled error occurred in the get_volume intent. Could not get the current volume."

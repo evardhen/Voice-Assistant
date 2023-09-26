@@ -11,9 +11,9 @@ class CustomGetVoiceSpeedTool(BaseTool):
     async def _arun(self) -> str:
         raise NotImplementedError("custom_get_voice_speed does not support async")
 
-def get_voice_speed(voice_speed):
+def get_voice_speed():
     try:
         voice_speed = global_variables.tts.get_voiceSpeed()
-        return voice_speed
+        return str(voice_speed)
     except:
         return "An unhandled error occurred in the get_voice_speed intent. Could not get the current voice speed."
