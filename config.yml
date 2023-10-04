@@ -5,4 +5,4 @@ assistant:
   is_vosk_model: false
   allow_only_known_speaker: 'True'
   volume: 1.0
-  voiceSpeed: 170.0
+  voiceSpeed: 150

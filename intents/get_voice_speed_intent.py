@@ -3,7 +3,7 @@ import global_variables
 
 class CustomGetVoiceSpeedTool(BaseTool):
     name = "get_voice_speed"
-    description = "useful when you want to retrieve the current voice speed of the assistant Luna."
+    description = "useful when you want to retrieve the current voice speed of the assistant Luna. The function takes no input parameter."
 
     def _run(self) -> str:
         return get_voice_speed() + "\n\n"
@@ -14,6 +14,6 @@ class CustomGetVoiceSpeedTool(BaseTool):
 def get_voice_speed():
     try:
         voice_speed = global_variables.tts.get_voiceSpeed()
-        return str(voice_speed)
+        return f"The current voice speed is {int(voice_speed)}. The voice speed range is between 150 and 200."
     except:
         return "An unhandled error occurred in the get_voice_speed intent. Could not get the current voice speed."

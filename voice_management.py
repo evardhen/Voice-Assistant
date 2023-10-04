@@ -3,14 +3,10 @@ import threading
 from loguru import logger
 from langdetect import detect
 from gtts import gTTS
-import numpy as np
-import sounddevice as sd
-import soundfile as sf
 from pydub import AudioSegment
-from pydub.effects import speedup
+from pydub.playback import play
 
 SPEECH_FILE_PATH = "./audios/gtts_output.mp3"
-MODIFIED_SPEECH_FILE_PATH = "./audios/gtts_output_modified.wav"
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -21,37 +17,37 @@ def __speak__(text, voiceId, speed, vol):
     engine.runAndWait()
     logger.debug("Finished pytts speaker thread.")
 
-def __speak_gtts__(text, volume, pytts_speed, default_language):
+def __speak_gtts__(text, volume, pytts_voice_speed, default_language):
     detected_language = detect_language(text, default_language)
 
     tts = gTTS(text=text, lang=detected_language, slow=False)
     # Saving the converted audio in a BytesIO object
     tts.save(SPEECH_FILE_PATH)
 
-    audio = AudioSegment.from_mp3(SPEECH_FILE_PATH)
-    
-    # Calculate the volume change in percent, where 0.5 is the reference with a rane from 0 to 1
-    volume_change_percent = ((volume/0.5) - 1) * 100
-    if volume_change_percent != 0:
-        audio = change_volume(audio, volume_change_percent)
+    # Load the audio file
+    audio = AudioSegment.from_file(SPEECH_FILE_PATH, format="mp3")
 
-    chunk_size = 150 # in milliseconds
-
-    # convert the scale from pytts to gtts
-    gtts_speed = pytts_speed / 150
-    if gtts_speed > 1.0:
-        audio = speedup(audio, gtts_speed, chunk_size)
-    elif gtts_speed < 1:
-        logger.error(f"Value out of range for voice speed: {gtts_speed}, only allowed between 1. and 1.33!")
-        
-    audio.export(MODIFIED_SPEECH_FILE_PATH, format="wav")
-
-    # Read the wav file
-    data, fs = sf.read(MODIFIED_SPEECH_FILE_PATH)
-    # Play the audio
-    sd.play(data, fs)
-    sd.wait()
+    # Change volume in percentage
+    audio_mod = change_volume(audio, volume * 100)
+    # Speed up the audio, 150 is used as lowest ground speed using the pytts library
+    converted_speed = pytts_voice_speed / 150 - 0.05
+    print(converted_speed)
+    if converted_speed <= 1:
+        converted_speed = 1
+    audio_speedup = audio_mod.speedup(playback_speed=converted_speed)
+    play(audio_speedup)
     logger.debug("Finished gTTS speaker thread.")
+
+def change_volume(audio, percent):
+    if percent == 0:
+        return audio - 100
+    if percent <= 100:
+        return audio + (audio.dBFS - (percent / 100) * audio.dBFS)
+    elif percent > 100:
+        vol_change = audio.dBFS - (percent / 100) * audio.dBFS
+        if audio.dBFS - vol_change >= 0:
+            vol_change = audio
+        return audio + vol_change
 
 def detect_language(string, default_language):
     detected_language = detect(string)
@@ -59,17 +55,8 @@ def detect_language(string, default_language):
         detected_language = default_language
     return detected_language
 
-def change_volume(audio, volume_change_percent):
-    # Calculate the linear gain factor based on the percentage change in volume
-    gain = 1 + (volume_change_percent / 100.0)
-
-    # Apply the gain to the audio
-    adjusted_audio = audio.apply_gain(gain)
-    
-    return adjusted_audio
-
 class Voice():
-    def __init__(self, voiceSpeed = 150, volume = 0.5):
+    def __init__(self, voiceSpeed, volume):
         self.process = None
         self.voiceId = None
         self.voiceSpeed = voiceSpeed
