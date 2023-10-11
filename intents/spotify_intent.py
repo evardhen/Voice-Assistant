@@ -31,6 +31,9 @@ def spotify_player(song_title: Optional[str] = None, artist_name: Optional[str] 
     """
     Lets you specify a song, artist, album, or playlist to play on Spotify.
     """
+    if global_variables.radio_player.is_playing():
+        global_variables.radio_player.stop()
+        
     try:
         spotify_player = SpotifyPlayer()
 

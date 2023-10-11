@@ -8,7 +8,7 @@ from loguru import logger
 import random
 
 def start_radio(audioplayer, volume, language, name):
-    config_path = os.path.join("./intents/functions/start_radio/config_start_radio.yaml")
+    config_path = os.path.join("./intents/config_start_radio.yaml")
     with open(config_path, "r", encoding="utf-8") as file:
         config_file = yaml.load(file, Loader=yaml.FullLoader)
 

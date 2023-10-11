@@ -29,13 +29,13 @@ def __speak_gtts__(text, volume, pytts_voice_speed, default_language):
 
     # Change volume in percentage
     audio_mod = change_volume(audio, volume * 100)
+    
     # Speed up the audio, 150 is used as lowest ground speed using the pytts library
     converted_speed = pytts_voice_speed / 150 - 0.05
-    print(converted_speed)
-    if converted_speed <= 1:
-        converted_speed = 1
-    audio_speedup = audio_mod.speedup(playback_speed=converted_speed)
-    play(audio_speedup)
+    if converted_speed > 1:
+        audio_mod = audio_mod.speedup(playback_speed=converted_speed)
+    
+    play(audio_mod)
     logger.debug("Finished gTTS speaker thread.")
 
 def change_volume(audio, percent):

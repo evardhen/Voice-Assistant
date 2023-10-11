@@ -1,0 +1,17 @@
+audioplayer==0.6
+fuzzywuzzy==0.18.0
+langchain==0.0.312
+loguru==0.7.2
+num2words==0.5.12
+Pillow==10.0.1
+Pillow==10.0.1
+python-dotenv==1.0.0
+python_dateutil==2.8.2
+PyYAML==6.0.1
+PyYAML==6.0.1
+Requests==2.31.0
+spotipy==2.23.0
+text2numde==1.0
+tinydb==4.8.0
+torch==2.1.0
+transformers==4.34.0

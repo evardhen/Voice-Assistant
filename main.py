@@ -10,7 +10,6 @@ import wave
 import dotenv
 
 import pvporcupine
-from vosk import Model, SpkModel, KaldiRecognizer
 import openai
 
 from voice_management import Voice
@@ -31,7 +30,6 @@ class VoiceAssistant():
         self.audio_frames = []
         self.default_wakeword = 'Hey Luna'
         self.mute_volume = 0.1
-        self.recognizer = None
 
         dotenv.load_dotenv()
         microphone_index = self.select_microphone()
@@ -39,8 +37,6 @@ class VoiceAssistant():
         self.initialize_voice()
         self.initialize_spotify()
         self.initialize_wakeword_detection(microphone_index)
-        if self.config['assistant']['is_vosk_model']:
-            self.load_vosk_model()
         self.initialize_intents()
         self.initialize_music_stream()
         logger.debug("Initialization completed.")
@@ -80,19 +76,11 @@ class VoiceAssistant():
         global_variables.spotify = Spotify()
 
     def initialize_music_stream(self):
-        self.audioplayer = AudioPlayer(self.volume)
+        global_variables.radio_player = AudioPlayer(self.volume)
 
     def initialize_intents(self):
         self.intents = IntentManagement(self)
         self.callbacks = self.intents.register_callbacks()
-
-    def load_vosk_model(self):
-        logger.debug("Lade s2t Modell...")
-        s2t_model = Model('./speech_model/vosk-model-de-0.21/vosk-model-de-0.21') # path to model
-        logger.debug("Lade Speaker Modell...")
-        speaker_model = SpkModel('./speech_model/vosk-model-spk-0.4/vosk-model-spk-0.4') # path to model
-        logger.debug("Speaker Modelle erfolgreich geladen.")
-        self.recognizer = KaldiRecognizer(s2t_model, 16000, speaker_model)
 
     def open_global_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as file:
@@ -132,11 +120,11 @@ class VoiceAssistant():
         for callback in self.callbacks:
             output = callback(False, self.language)
             if output and not global_variables.tts.is_busy():
-                if self.audioplayer.is_playing():
-                    self.audioplayer.set_volume(self.mute_volume)
+                if global_variables.radio_player.is_playing():
+                    global_variables.radio_player.set_volume(self.mute_volume)
                 callback(True, self.language)
                 global_variables.tts.say(output, self.language)
-                self.audioplayer.set_volume(global_variables.tts.get_volume())
+                global_variables.radio_player.set_volume(global_variables.tts.get_volume())
 
     def save_audio_to_wav(self, filename):
         wav_file = wave.open(filename, "wb")
@@ -145,39 +133,23 @@ class VoiceAssistant():
         wav_file.setframerate(self.porc.sample_rate)  # Set the frame rate to match the audio stream
         wav_file.writeframes(b''.join(self.audio_frames))
         wav_file.close()
-
-    def speech_activity_detection(self):
-        while True:
-            pcm = self.audio_stream.read(self.porc.frame_length)
-            if self.recognizer.AcceptWaveform(pcm):
-                self.recognizer.Reset()
-                logger.debug("Thread 1 zur Spracherkennung erfolgreich beendet.")
-                return
     
     def recognize_speech(self):
         # Mute other devices while listening
-        if self.audioplayer.is_playing():
-            logger.debug(f"Set audioplayer volume to mute volume: {self.mute_volume}")
-            self.audioplayer.set_volume(self.mute_volume)
+        if global_variables.radio_player.is_playing():
+            logger.debug(f"Stopped the radio player.")
+            global_variables.radio_player.stop()
         if global_variables.spotify.is_spotify_playing():
             logger.debug(f"Set spotify volume to mute volume: {self.mute_volume}")
             global_variables.spotify.set_volume(self.mute_volume)
         
         # Start 2 different threads for 2 different speech activity detections algorithms
         threshhold = 9
-        thread2 = threading.Thread(target=speech_activity_detection, args=(threshhold,))
-        thread2.start()
-        if self.recognizer is None:
-            while thread2.is_alive():
-                pcm = self.audio_stream.read(self.porc.frame_length)
-                self.audio_frames.append(pcm)
-        else:
-            thread = threading.Thread(target=self.speech_activity_detection)
-            thread.start()
-            while thread.is_alive() and thread2.is_alive():
-                pcm = self.audio_stream.read(self.porc.frame_length)
-                self.audio_frames.append(pcm)
-
+        thread = threading.Thread(target=speech_activity_detection, args=(threshhold,))
+        thread.start()
+        while thread.is_alive():
+            pcm = self.audio_stream.read(self.porc.frame_length)
+            self.audio_frames.append(pcm)
 
         # Write the recorded audio data to a .wav file
         self.save_audio_to_wav("./audios/recorded_audio.wav")
@@ -185,9 +157,6 @@ class VoiceAssistant():
 
         sentence = self.whisper("./audios/recorded_audio.wav")
 
-        # result = json.loads(self.recognizer.Result())
-        # # logger.info('Result: {}', result)
-        # sentence = result['text']
         logger.info("Ich habe '{}' verstanden.", sentence)
 
         output = self.intents.process(sentence)
@@ -234,8 +203,8 @@ class VoiceAssistant():
                 self.audio_stream.close()
             if self.pyAudio is not None:
                 self.pyAudio.terminate()
-            if self.audioplayer is not None:
-                self.audioplayer.stop()
+            if global_variables.radio_player is not None:
+                global_variables.radio_player.stop()
 
 
 if __name__ == '__main__':
