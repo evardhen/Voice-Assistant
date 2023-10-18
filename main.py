@@ -2,12 +2,14 @@ import argparse
 import sys
 import os
 import threading
+import subprocess
 from loguru import logger
 import yaml
 import pyaudio
 import struct
 import wave
 import dotenv
+import pickle
 
 import pvporcupine
 import openai
@@ -22,6 +24,8 @@ import global_variables
 CONFIG_FILE = 'config.yml'
 KEYWORD_PATH = os.path.abspath(os.path.join(".", "custom_wakewords", "Hey-Luna_de_windows_v2_2_0.ppn"))
 MODEL_FILE_PATH = os.path.abspath(os.path.join(".", "custom_wakewords", "porcupine_params_de.pv"))
+PIXEL_RING_PATH = "pixel_ring/pixel_ring/led_control.py" 
+
 
 class VoiceAssistant():
 
@@ -39,7 +43,13 @@ class VoiceAssistant():
         self.initialize_wakeword_detection(microphone_index)
         self.initialize_intents()
         self.initialize_music_stream()
+        self.initialize_pixel_ring()
         logger.debug("Initialization completed.")
+
+    def initialize_pixel_ring(self):
+        # Start the subprocess
+        command = ["python", PIXEL_RING_PATH, "initialize_pixel_ring"]
+        subprocess.run(command)
 
     def select_microphone(self):
         self.pyAudio = pyaudio.PyAudio()
@@ -135,6 +145,9 @@ class VoiceAssistant():
         wav_file.close()
     
     def recognize_speech(self):
+        # Activate LEDs
+        subprocess.run(["python", PIXEL_RING_PATH, "activate_doa"])
+
         # Mute other devices while listening
         if global_variables.radio_player.is_playing():
             logger.debug(f"Stopped the radio player.")
@@ -150,6 +163,9 @@ class VoiceAssistant():
         while thread.is_alive():
             pcm = self.audio_stream.read(self.porc.frame_length)
             self.audio_frames.append(pcm)
+        
+        # Change LEDs
+        subprocess.run(["python", PIXEL_RING_PATH, "wait_mode"])
 
         # Write the recorded audio data to a .wav file
         self.save_audio_to_wav("./audios/recorded_audio.wav")
@@ -160,8 +176,14 @@ class VoiceAssistant():
         logger.info("Ich habe '{}' verstanden.", sentence)
 
         output = self.intents.process(sentence)
+        
+        # Change LEDs
+        subprocess.run(["python", PIXEL_RING_PATH, "speak_mode"])
 
         global_variables.tts.say(output, self.language)
+
+        # Change LEDs
+        subprocess.run(["python", PIXEL_RING_PATH, "turn_off"])
 
     def whisper(self, filename):
         openai.api_key = os.environ.get('OPENAI_API_KEY')

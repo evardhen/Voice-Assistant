@@ -87,6 +87,8 @@ class Voice():
         else:
             thread = threading.Thread(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
         thread.start()
+
+        thread.join()
     
     def is_busy(self):
         if self.process:
