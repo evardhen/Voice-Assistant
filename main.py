@@ -228,6 +228,9 @@ class VoiceAssistant():
             if global_variables.radio_player is not None:
                 global_variables.radio_player.stop()
 
+            # Turn off LEDs
+            subprocess.run(["python", PIXEL_RING_PATH, "turn_off"])
+
 
 if __name__ == '__main__':
     va = VoiceAssistant()
