@@ -5,10 +5,10 @@ class CustomGetVoiceSpeedTool(BaseTool):
     name = "get_voice_speed"
     description = "useful when you want to retrieve the current voice speed of the assistant Luna. The function takes no input parameter."
 
-    def _run(self) -> str:
+    def _run(self, tmp: str) -> str:
         return get_voice_speed() + "\n\n"
 
-    async def _arun(self) -> str:
+    async def _arun(self, tmp: str) -> str:
         raise NotImplementedError("custom_get_voice_speed does not support async")
 
 def get_voice_speed():

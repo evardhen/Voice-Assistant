@@ -4,6 +4,14 @@ from langchain.prompts import MessagesPlaceholder
 from langchain.schema import SystemMessage
 from langchain.memory import ConversationBufferMemory
 
+from langchain.llms import OpenAI
+from langchain.utilities import SerpAPIWrapper, SQLDatabase
+from langchain.agents import Tool, AgentType
+from langchain.agents.openai_functions_multi_agent.base import OpenAIMultiFunctionsAgent
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import MessagesPlaceholder
+from langchain.memory import ConversationBufferMemory
+
 import glob
 import os
 from loguru import logger
@@ -26,13 +34,13 @@ from intents.start_radio_intent import CustomStartRadioTool
 from intents.stop_all_music_intent import CustomStopAllMusicTool
 from intents.open_shelf_intent import CustomOpenShelfTool
 from intents.close_shelf_intent import CustomCloseShelfTool
+from intents.get_feedback_intent import CustomProcessFeedbackTool
 
 SYSTEM_MESSAGE = SystemMessage(content="Luna is a large language model trained by OpenAI. Luna is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics." \
                                "As a language model, Luna is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide accurate and informative responses that are coherent and relevant to the topic at hand. Luna is" \
                                "constantly learning and improving, and its capabilities are constantly evolving. Luna is located in the ZEKI office kitchen at Technische Universität Berlin. Therefore, it either answers in german or english. Luna always gives very short answers, with no more than 100 words." \
                                "When provided with a question or any other input, no matter how simple, Luna always refers to its trusty tools and absolutely does NOT try to answer questions by itself. If Luna cannot associate an input or question with one of its tools, it gives a very short response, asking the user to repeat the question." \
                                 "Overall, Luna is a powerful system that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Luna is here to assist.")
-
 
 class IntentManagement():
 
@@ -42,11 +50,11 @@ class IntentManagement():
         self.language = va.config['assistant']['language']
         logger.debug("Starting intent management...")
 
-        self.initialize_llm()
+        self.initialize_llm_v2()
 
     def initialize_llm(self):
         dotenv.load_dotenv()
-        llm = ChatOpenAI(temperature=0)
+        llm = ChatOpenAI(temperature=0, stream=True)
 
         # Load predefined tools
         tools = load_tools(["llm-math"], llm=llm)
@@ -54,7 +62,7 @@ class IntentManagement():
 
         # Load custom tools/intents
         tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), \
-                      CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomCloseShelfTool(), CustomOpenShelfTool()])
+                      CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomCloseShelfTool(), CustomOpenShelfTool(), CustomProcessFeedbackTool()])
 
         # Create a prompt
         prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
@@ -66,6 +74,37 @@ class IntentManagement():
         agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
 
         self.agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
+
+    def initialize_llm_v2(self):
+        dotenv.load_dotenv()
+
+        # Assuming you have a language model and tools
+        # llm = ChatOpenAI(temperature=0, model="gpt-4")
+        llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+
+        tools = load_tools(["llm-math"], llm=llm)
+
+        # Load custom tools/intents
+        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), \
+                      CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomCloseShelfTool(), CustomOpenShelfTool()])
+
+
+        prompt = OpenAIFunctionsAgent.create_prompt(
+            system_message=SYSTEM_MESSAGE,
+            extra_prompt_messages=[MessagesPlaceholder(variable_name="memory")],
+        )
+        # Create the memory
+        memory = ConversationBufferMemory(llm=llm, memory_key="memory", return_messages=True)
+
+        agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
+
+        self.agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            memory=memory,
+            verbose=True,
+            return_intermediate_steps=False,
+        )
 
     def process(self, query):
         return self.agent_executor.run(query)

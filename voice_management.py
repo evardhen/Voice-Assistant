@@ -5,8 +5,12 @@ from langdetect import detect
 from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
+import sounddevice as sd
+from openai import OpenAI
+
 
 SPEECH_FILE_PATH = "./audios/gtts_output.mp3"
+SPEECH_FILE_PATH_OPENAI = "./audios/openai_output.mp3"
 
 def __speak__(text, voiceId, speed, vol):
     engine = pyttsx3.init()
@@ -17,9 +21,9 @@ def __speak__(text, voiceId, speed, vol):
     engine.runAndWait()
     logger.debug("Finished pytts speaker thread.")
 
+
 def __speak_gtts__(text, volume, pytts_voice_speed, default_language):
     detected_language = detect_language(text, default_language)
-
     tts = gTTS(text=text, lang=detected_language, slow=False)
     # Saving the converted audio in a BytesIO object
     tts.save(SPEECH_FILE_PATH)
@@ -34,9 +38,35 @@ def __speak_gtts__(text, volume, pytts_voice_speed, default_language):
     converted_speed = pytts_voice_speed / 150 - 0.05
     if converted_speed > 1:
         audio_mod = audio_mod.speedup(playback_speed=converted_speed)
-    
+
+
     play(audio_mod)
     logger.debug("Finished gTTS speaker thread.")
+
+def __speak_openai__(text, volume, pytts_voice_speed):
+    client = OpenAI()
+    response = client.audio.speech.create(
+    model="tts-1",
+    voice="nova",
+    input=text
+    )
+    response.stream_to_file(SPEECH_FILE_PATH_OPENAI)
+
+
+    # Load the audio file
+    audio = AudioSegment.from_file(SPEECH_FILE_PATH_OPENAI, format="mp3")
+
+    # Change volume in percentage
+    audio_mod = change_volume(audio, volume * 100)
+    
+    # Speed up the audio, 150 is used as lowest ground speed using the pytts library
+    converted_speed = pytts_voice_speed / 150 - 0.05
+    if converted_speed > 1:
+        audio_mod = audio_mod.speedup(playback_speed=converted_speed)
+
+
+    play(audio_mod)
+    logger.debug("Finished openai speaker thread.")
 
 def change_volume(audio, percent):
     if percent == 0:
@@ -61,7 +91,7 @@ class Voice():
         self.voiceId = None
         self.voiceSpeed = voiceSpeed
         self.volume = volume
-        self.voice_engine = "gTTS"
+        self.voice_engine = "openai"
 
     def get_volume(self):
         return self.volume
@@ -84,6 +114,8 @@ class Voice():
     def say(self, text, default_language):
         if self.voice_engine == "gTTS":
             thread = threading.Thread(target=__speak_gtts__, args=(text, self.volume, self.voiceSpeed, default_language))
+        elif self.voice_engine == "openai":
+            thread = threading.Thread(target=__speak_openai__, args=(text, self.volume, self.voiceSpeed))
         else:
             thread = threading.Thread(target=__speak__, args=(text, self.voiceId, self.voiceSpeed, self.volume))
         thread.start()
@@ -108,3 +140,20 @@ class Voice():
             elif language_search_string in voice.id:
                 result.append(voice.id)
         return result
+    
+def get_voice_id(language=''):
+    result = []
+    engine = pyttsx3.init()
+    language_search_string = language.upper() + '-' # hardcoded as it can be found in voices
+    voices = engine.getProperty('voices')
+    for voice in voices:
+        if language == '':
+            result.append(voice.id)
+        elif language_search_string in voice.id:
+            result.append(voice.id)
+    return result    
+
+# id = get_voice_id("de")
+# # thread = threading.Thread(target=__speak_gtts__, args=("Was ist 5 + 5", 1.0, 170, "de"))
+# #thread = threading.Thread(target=__speak__, args=("Was ist 5 + 5", id, 170, 1.0))
+# __speak_gtts__("Was ist 5 + 5", 1.0, 170, "de")

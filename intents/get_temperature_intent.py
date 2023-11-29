@@ -7,7 +7,7 @@ import re
 
 class CustomGetTemperatureTool(BaseTool):
     name = "get_temperature"
-    description = "useful when you want to get the temperature of a specified day. The day is specified either as a date, a weekday, today or tommorrow. If there is information about the weekday and a date, only use the date. The date should have the format day, month, year, seperated by a dot, like \"01.01.2023\" or \"03.05\". If the year or month is missing, leave an empty space for that parameter. Always pass a the input in english."
+    description = "useful when you want to get the temperature of a specified day. The day is specified either as a date, a weekday, today, tommorrow or the day after tomorrow. If there is information about the weekday and a date, only use the date. The date should have the format day, month, year, seperated by a dot, like \"01.01.2023\" or \"03.05\". If the year or month is missing, leave an empty space for that parameter. Always pass a the input in english, for example \"monday\", \"saturday\" or \"day after tomorrow\"."
 
     def _run(self, day) -> str:
         return get_temperature(day) + "\n\n"
@@ -37,6 +37,11 @@ def get_temperature(day):
     elif day == "tomorrow":
         # Get tomorrow's date
         specified_date = datetime.now() + timedelta(days=1)
+        day_of_week = specified_date.strftime("%A")
+        specified_date = specified_date.date().strftime("%Y-%m-%d")
+    elif day == "day after tomorrow":
+        # Get tomorrow's date
+        specified_date = datetime.now() + timedelta(days=2)
         day_of_week = specified_date.strftime("%A")
         specified_date = specified_date.date().strftime("%Y-%m-%d")
     elif day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag", "sonntag"]:

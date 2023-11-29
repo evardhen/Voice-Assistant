@@ -45,3 +45,5 @@ intent:
             "Deutsch Rap": "http://stream.89.0rtl.de/deutsch-rap/mp3-128"
             "Indie": "https://stream.rtlradio.de/indieclassics/mp3-128"
             "Country": "https://stream.rtlradio.de/country/mp3-128"
+            "Klassik": "https://stream.klassikradio.de/live/mp3-192/liveradio/"
+            "Klassik Radio": "https://stream.klassikradio.de/live/mp3-192/liveradio/"

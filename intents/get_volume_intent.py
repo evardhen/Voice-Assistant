@@ -5,10 +5,10 @@ class CustomGetVolumeTool(BaseTool):
     name = "get_volume"
     description = "useful when you want to retrieve the current volume of the assistant Luna. The function takes no input parameter."
 
-    def _run(self) -> str:
+    def _run(self, tmp: str) -> str:
         return get_volume() + "\n\n"
 
-    async def _arun(self) -> str:
+    async def _arun(self, tmp: str) -> str:
         raise NotImplementedError("custom_volume does not support async")
 
 def get_volume():

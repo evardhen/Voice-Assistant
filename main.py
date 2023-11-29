@@ -13,12 +13,14 @@ import pickle
 
 import pvporcupine
 import openai
+from openai import OpenAI
+
 
 from voice_management import Voice
 from intent_management import IntentManagement
 from audioplayer import AudioPlayer
 from spotify_management import Spotify
-from usb_4_mic_array.VAD import speech_activity_detection
+from usb_4_mic_array.VAD import speech_activity_detection, wait_for_speaker
 import global_variables
 
 CONFIG_FILE = 'config.yml'
@@ -157,10 +159,17 @@ class VoiceAssistant():
             global_variables.spotify.set_volume(self.mute_volume)
         
         # Start 2 different threads for 2 different speech activity detections algorithms
-        threshhold = 9
-        thread = threading.Thread(target=speech_activity_detection, args=(threshhold,))
+        threshhold_wait_time = 4
+        threshhold = 4
+        thread = threading.Thread(target=wait_for_speaker, args=(threshhold_wait_time,))
+        thread2 = threading.Thread(target=speech_activity_detection, args=(threshhold,))
         thread.start()
         while thread.is_alive():
+            pcm = self.audio_stream.read(self.porc.frame_length)
+            self.audio_frames.append(pcm)
+        
+        thread2.start()
+        while thread2.is_alive():
             pcm = self.audio_stream.read(self.porc.frame_length)
             self.audio_frames.append(pcm)
         
@@ -176,7 +185,7 @@ class VoiceAssistant():
         logger.info("Ich habe '{}' verstanden.", sentence)
 
         output = self.intents.process(sentence)
-        
+        print(output)
         # Change LEDs
         subprocess.run(["python", PIXEL_RING_PATH, "speak_mode"])
 
@@ -187,8 +196,12 @@ class VoiceAssistant():
 
     def whisper(self, filename):
         openai.api_key = os.environ.get('OPENAI_API_KEY')
-        audio_file = open(filename, "rb")
-        transcript = openai.Audio.transcribe("whisper-1", audio_file)
+        client = OpenAI()
+        audio_file= open(filename, "rb")
+        transcript = client.audio.transcriptions.create(
+        model="whisper-1", 
+        file=audio_file
+        )
         return transcript.text
 
     def run(self):

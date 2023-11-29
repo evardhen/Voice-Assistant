@@ -5,10 +5,10 @@ class CustomStopAllMusicTool(BaseTool):
     name = "stop_all_music"
     description = "useful when you want to stop the music played over the assistant Luna."
 
-    def _run(self) -> str:
+    def _run(self, tmp: str) -> str:
         return stop_all_music() + "\n\n"
 
-    async def _arun(self) -> str:
+    async def _arun(self, tmp: str) -> str:
         raise NotImplementedError("custom_stop_all_music does not support async")
 
 def stop_all_music():

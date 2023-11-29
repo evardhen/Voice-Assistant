@@ -1,4 +1,4 @@
-from langchain import GoogleSearchAPIWrapper
+from langchain.utilities.google_search import GoogleSearchAPIWrapper
 from langchain.tools import BaseTool
 
 

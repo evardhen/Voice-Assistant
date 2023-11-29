@@ -1,24 +1,28 @@
+import openai
 import os
-import re
+import dotenv
+from openai import OpenAI
+dotenv.load_dotenv()
+client = OpenAI()
 
-with open('installed_packages.txt', 'r') as f:
-    installed_packages = f.read()
+def whisper(filename):
+    audio_file= open(filename, "rb")
+    transcript = client.audio.transcriptions.create(
+    model="whisper-1", 
+    file=audio_file
+    )
+    return transcript.text
 
-# Assuming your project is in a folder named 'my_project'
-project_path = 'my_project'
-used_packages = set()
 
-for dirpath, dirnames, filenames in os.walk(project_path):
-    for filename in filenames:
-        if filename.endswith('.py'):
-            with open(os.path.join(dirpath, filename), 'r') as f:
-                content = f.read()
-                imports = re.findall(r'^\s*import\s+(\S+)', content, re.MULTILINE)
-                imports += re.findall(r'^\s*from\s+(\S+)\s+import', content, re.MULTILINE)
-                used_packages.update(imports)
+def TTS(filename, sentence):
+    response = client.audio.speech.create(
+    model="tts-1",
+    voice="nova",
+    input=sentence
+    )
 
-unused_packages = [pkg for pkg in installed_packages.split('\n') if pkg.split('=')[0].strip() not in used_packages]
+    response.stream_to_file(filename)
 
-print('Unused packages:')
-for pkg in unused_packages:
-    print(pkg)
+sentence = "Barack Obama ist ein amerikanischer Politiker und Anwalt, der von 2009 bis 2017 der 44. Pr▒sident der Vereinigten Staaten war. Er ist bekannt f▒r seine historische Wahl als erster afroamerikanischer Pr▒sident der USA. Weitere Informationen finden Sie auf der offiziellen Website von Barack und Michelle Obama oder auf der Obama Foundation Website."
+print(sentence)
+TTS("./audios/test.wav", sentence)
