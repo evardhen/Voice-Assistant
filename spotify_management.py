@@ -39,11 +39,14 @@ class Spotify():
         
         # Find the ID of the first recognized device to play spotify on
         self.device_id = None
+        computer_name = "KITCHEN_VA"  # Replace with your computer's Spotify name
         devices = self.sp.devices()
         for device in devices['devices']:
             logger.debug("Device name for Spotify: {}", device['name'])
-            self.device_id = device['id']
-            break
+            if device['name'] == computer_name:
+                self.device_id = device['id']
+                logger.info("Using Spotify on device: {}", device['name'])
+                break
         if not self.device_id:
             logger.error("No Spotify application detected.")
 

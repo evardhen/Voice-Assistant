@@ -1,3 +1,4 @@
+from fuzzywuzzy import fuzz
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import os
@@ -41,6 +42,10 @@ def spotify_player(song_title: Optional[str] = None, artist_name: Optional[str] 
             song_info = spotify_player.play_song_from_artist(song_title, artist_name)
             global_variables.spotify._is_playing = True
             return f"Playing {song_info['name']} by {song_info['artists'][0]['name']} 1 \n"
+        if album_name and artist_name and album_name != "null" and artist_name != "null":
+            song_info = spotify_player.play_album_from_artist(album_name, artist_name)
+            global_variables.spotify._is_playing = True
+            return "Playing the album " + album_name + "5\n"
         if song_title and song_title != "null":
             song_info = spotify_player.play_song(song_title)
             global_variables.spotify._is_playing = True
@@ -77,9 +82,15 @@ class SpotifyPlayer:
 
         # assuming the first device is the one we want
         try:
-            self.device_id = self.devices["devices"][0]["id"]
+            computer_name = "KITCHEN_VA"  # Replace with your computer's Spotify name
+            devices = self.sp.devices()
+            for device in devices['devices']:
+                if device['name'] == computer_name:
+                    self.device_id = device['id']
+                    break
+
             if not self.device_id:
-                raise Exception("No device found, please make sure you have one connected.")
+                raise Exception("Device Kitchen_VA not found, please make sure you have one connected.")
         except Exception as e:
             raise Exception("Can't get device id: " + str(e))
         
@@ -117,23 +128,42 @@ class SpotifyPlayer:
 
         # Get the first artist from the search results
         artist_uri = results["artists"]["items"][0]["uri"]
+        self.sp.shuffle(state=True, device_id=self.device_id)
 
         # Start playback
         self.sp.start_playback(device_id=self.device_id, context_uri=artist_uri)
         return results["artists"]["items"][0]
 
+
     def play_album_from_artist(self, album_name, artist_name):
         # Search for the album
         results = self.sp.search(
-            q=f"{album_name} artist:{artist_name}", limit=1, type="album"
+            q=f"album:{album_name} artist:{artist_name}", limit=10, type="album"
         )
 
-        # Get the first album from the search results
-        album_uri = results["albums"]["items"][0]["uri"]
+        best_match = None
+        highest_score = 0
 
-        # Start playback
-        self.sp.start_playback(device_id=self.device_id, context_uri=album_uri)
-        return results["albums"]["items"][0]
+        # Loop through results to find the best match using fuzzy matching
+        for item in results["albums"]["items"]:
+            current_score = fuzz.ratio(item["name"].lower(), album_name.lower())
+            if current_score > highest_score:
+                for artist in item['artists']:
+                    artist_score = fuzz.ratio(artist['name'].lower(), artist_name.lower())
+                    if artist_score > 70:  # You can adjust this threshold
+                        highest_score = current_score
+                        best_match = item
+
+        if best_match:
+            album_uri = best_match["uri"]
+
+            self.sp.shuffle(state=False, device_id=self.device_id)
+            # Start playback
+            self.sp.start_playback(device_id=self.device_id, context_uri=album_uri)
+            return best_match
+
+        return "Could not find a similar album on spotify"
+
 
     def play_album(self, album_name):
         # Search for the album
@@ -141,7 +171,7 @@ class SpotifyPlayer:
 
         # Get the first album from the search results
         album_uri = results["albums"]["items"][0]["uri"]
-
+        self.sp.shuffle(state=False, device_id=self.device_id)
         # Start playback
         self.sp.start_playback(device_id=self.device_id, context_uri=album_uri)
         return results["albums"]["items"][0]
@@ -158,5 +188,6 @@ class SpotifyPlayer:
         # Search for all playlists
         results = self.sp.search(q=playlist_name, limit=1, type="playlist")
         playlist_uri = results["playlists"]["items"][0]["uri"]
+        self.sp.shuffle(state=True, device_id=self.device_id)
         self.sp.start_playback(device_id=self.device_id, context_uri=playlist_uri)
         return results["playlists"]["items"][0]

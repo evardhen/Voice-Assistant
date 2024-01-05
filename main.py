@@ -10,6 +10,7 @@ import struct
 import wave
 import dotenv
 import pickle
+import time
 
 import pvporcupine
 import openai
@@ -147,6 +148,7 @@ class VoiceAssistant():
         wav_file.close()
     
     def recognize_speech(self):
+        start_time = time.time()  # Start time for overall process        
         # Activate LEDs
         subprocess.run(["python", PIXEL_RING_PATH, "activate_doa"])
 
@@ -158,9 +160,10 @@ class VoiceAssistant():
             logger.debug(f"Set spotify volume to mute volume: {self.mute_volume}")
             global_variables.spotify.set_volume(self.mute_volume)
         
+        vad_start_time = time.time()
         # Start 2 different threads for 2 different speech activity detections algorithms
-        threshhold_wait_time = 4
-        threshhold = 4
+        threshhold_wait_time = 3
+        threshhold = 5
         thread = threading.Thread(target=wait_for_speaker, args=(threshhold_wait_time,))
         thread2 = threading.Thread(target=speech_activity_detection, args=(threshhold,))
         thread.start()
@@ -175,7 +178,10 @@ class VoiceAssistant():
         
         # Change LEDs
         subprocess.run(["python", PIXEL_RING_PATH, "wait_mode"])
-
+        
+        vad_end_time = time.time()
+        vad_duration = vad_end_time - vad_start_time
+        s2t_start_time = time.time()
         # Write the recorded audio data to a .wav file
         self.save_audio_to_wav("./audios/recorded_audio.wav")
         self.audio_frames = []
@@ -184,15 +190,31 @@ class VoiceAssistant():
 
         logger.info("Ich habe '{}' verstanden.", sentence)
 
+        s2t_end_time = time.time()
+        s2t_duration = s2t_end_time - s2t_start_time
+        nlp_start_time = time.time()
+
         output = self.intents.process(sentence)
         print(output)
+        nlp_end_time = time.time()
+        nlp_duration = nlp_end_time - nlp_start_time
+
         # Change LEDs
         subprocess.run(["python", PIXEL_RING_PATH, "speak_mode"])
-
+        tts_start_time = time.time()
         global_variables.tts.say(output, self.language)
+        tts_end_time = time.time()
+        tts_duration = tts_end_time - tts_start_time
 
         # Change LEDs
         subprocess.run(["python", PIXEL_RING_PATH, "turn_off"])
+        end_time = time.time()
+        overall_duration = end_time - start_time
+
+        # Logging times to a file
+        with open("./durations_log.txt", "a") as file:
+            file.write(f"vad: {vad_duration:.2f}, s2t: {s2t_duration:.2f}, nlp: {nlp_duration:.2f}, tts: {tts_duration:.2f}, overall: {overall_duration:.2f}\n")
+
 
     def whisper(self, filename):
         openai.api_key = os.environ.get('OPENAI_API_KEY')
@@ -221,6 +243,7 @@ class VoiceAssistant():
         except KeyboardInterrupt:
             print("\n")
             logger.info("Process interrupted by keyboard.")
+            raise
 
         finally:
             try:
@@ -245,6 +268,18 @@ class VoiceAssistant():
             subprocess.run(["python", PIXEL_RING_PATH, "turn_off"])
 
 
+def run_voice_assistant():
+    while True:
+        try:
+            va = VoiceAssistant()
+            va.run()
+        except KeyboardInterrupt:
+            logger.info("VoiceAssistant is shutting down due to keyboard interrupt.")
+            break
+        except Exception as e:
+            logger.error(f"Unhandled exception: {e}. Restarting VoiceAssistant...")
+            time.sleep(1)  # Delay before restarting to prevent immediate and continuous restarts
+
+
 if __name__ == '__main__':
-    va = VoiceAssistant()
-    va.run()
+    run_voice_assistant()

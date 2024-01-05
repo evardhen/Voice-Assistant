@@ -3,7 +3,7 @@ import global_variables
 
 class CustomStopAllMusicTool(BaseTool):
     name = "stop_all_music"
-    description = "useful when you want to stop the music played over the assistant Luna."
+    description = "useful when you want to stop the music played over the assistant Luna. The input parameter is mandatory and always the string \"stop\"."
 
     def _run(self, tmp: str) -> str:
         return stop_all_music() + "\n\n"

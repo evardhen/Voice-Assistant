@@ -32,8 +32,7 @@ from intents.get_time_intent import CustomGetTimeTool
 from intents.get_temperature_intent import CustomGetTemperatureTool
 from intents.start_radio_intent import CustomStartRadioTool
 from intents.stop_all_music_intent import CustomStopAllMusicTool
-from intents.open_shelf_intent import CustomOpenShelfTool
-from intents.close_shelf_intent import CustomCloseShelfTool
+from intents.switch_shelf_intent import CustomSwitchShelfPositionTool
 from intents.get_feedback_intent import CustomProcessFeedbackTool
 
 SYSTEM_MESSAGE = SystemMessage(content="Luna is a large language model trained by OpenAI. Luna is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics." \
@@ -52,28 +51,28 @@ class IntentManagement():
 
         self.initialize_llm_v2()
 
-    def initialize_llm(self):
-        dotenv.load_dotenv()
-        llm = ChatOpenAI(temperature=0, stream=True)
+    # def initialize_llm(self):
+    #     dotenv.load_dotenv()
+    #     llm = ChatOpenAI(temperature=0, stream=True)
 
-        # Load predefined tools
-        tools = load_tools(["llm-math"], llm=llm)
-        # tools = load_tools(["llm-math", "google-search"], llm=llm)
+    #     # Load predefined tools
+    #     tools = load_tools(["llm-math"], llm=llm)
+    #     # tools = load_tools(["llm-math", "google-search"], llm=llm)
 
-        # Load custom tools/intents
-        tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), \
-                      CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomCloseShelfTool(), CustomOpenShelfTool(), CustomProcessFeedbackTool()])
+    #     # Load custom tools/intents
+    #     tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), \
+    #                   CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomCloseShelfTool(), CustomOpenShelfTool(), CustomProcessFeedbackTool()])
 
-        # Create a prompt
-        prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
+    #     # Create a prompt
+    #     prompt = OpenAIFunctionsAgent.create_prompt(system_message=SYSTEM_MESSAGE, extra_prompt_messages=[MessagesPlaceholder(variable_name="chat_history")])
         
-        # Set up memory
-        memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    #     # Set up memory
+    #     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-        # Create agent to select correct intent
-        agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
+    #     # Create agent to select correct intent
+    #     agent = OpenAIFunctionsAgent(llm=llm, tools=tools, prompt=prompt)
 
-        self.agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
+    #     self.agent_executor = AgentExecutor(agent=agent, tools=tools, memory=memory, verbose=True)
 
     def initialize_llm_v2(self):
         dotenv.load_dotenv()
@@ -86,7 +85,7 @@ class IntentManagement():
 
         # Load custom tools/intents
         tools.extend([CustomSpotifyTool(), ImageCaptionTool(), CustomGoogleSearchTool(), CustomGetVolumeTool(), CustomSetVolumeTool(), CustomSetVoiceSpeedTool(), \
-                      CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomCloseShelfTool(), CustomOpenShelfTool()])
+                      CustomGetVoiceSpeedTool(), CustomGetDateTool(), CustomGetTimeTool(), CustomSwitchShelfPositionTool(), CustomGetTemperatureTool(), CustomStartRadioTool(), CustomStopAllMusicTool(), CustomProcessFeedbackTool()])
 
 
         prompt = OpenAIFunctionsAgent.create_prompt(

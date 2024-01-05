@@ -23,6 +23,8 @@ class CustomStartRadioTool(BaseTool):
 def start_radio(name):
     if global_variables.spotify.is_spotify_playing():
         global_variables.spotify.stop()
+    if global_variables.radio_player.is_playing():
+        global_variables.radio_player.stop()
 
     config_path = os.path.join("./intents/config_start_radio.yaml")
     with open(config_path, "r", encoding="utf-8") as file:
