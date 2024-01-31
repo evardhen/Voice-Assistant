@@ -47,7 +47,15 @@ class VoiceAssistant():
         self.initialize_intents()
         self.initialize_music_stream()
         self.initialize_pixel_ring()
+        # self.initilize_loguru()
         logger.debug("Initialization completed.")
+
+    def initilize_loguru(self):
+        # Configure logger to avoid UnicodeEncodeError
+        logger.remove()
+        logger.add("log_file.log", encoding="utf-8", enqueue=True, mode='w')
+        # logger.add(lambda msg: sys.stdout.buffer.write(msg.encode('utf-8', errors='replace') + b'\n'))
+
 
     def initialize_pixel_ring(self):
         # Start the subprocess
@@ -94,6 +102,17 @@ class VoiceAssistant():
     def initialize_intents(self):
         self.intents = IntentManagement(self)
         self.callbacks = self.intents.register_callbacks()
+
+    def print_if_cp1252(s):
+        try:
+            # Try to encode the string with cp1252
+            s.encode('cp1252')
+        except UnicodeEncodeError:
+            # If an error occurs, the string contains characters not supported by cp1252
+            logger.error("String cannot be encoded with cp1252.")
+        else:
+            # If no error occurs, print the string
+            logger.info(s)
 
     def open_global_config(self):
         with open(CONFIG_FILE, "r", encoding='utf-8') as file:
@@ -187,8 +206,16 @@ class VoiceAssistant():
         self.audio_frames = []
 
         sentence = self.whisper("./audios/recorded_audio.wav")
-
-        logger.info("Ich habe '{}' verstanden.", sentence)
+        output_string = "Ich habe " + sentence + " verstanden."
+        try:
+            # Try to encode the string with cp1252
+            output_string.encode('cp1252')
+        except UnicodeEncodeError:
+            # If an error occurs, the string contains characters not supported by cp1252
+            logger.error("String cannot be encoded with cp1252.")
+        else:
+            # If no error occurs, print the string
+            logger.info(output_string)
 
         s2t_end_time = time.time()
         s2t_duration = s2t_end_time - s2t_start_time

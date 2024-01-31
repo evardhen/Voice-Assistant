@@ -103,6 +103,7 @@ class IntentManagement():
             memory=memory,
             verbose=True,
             return_intermediate_steps=False,
+            max_iterations = 3
         )
 
     def process(self, query):

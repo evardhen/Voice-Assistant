@@ -41,7 +41,7 @@ def start_radio(name):
     station_name, URL = random.choice(list(station_dict.items()))
     global_variables.radio_player.set_volume(global_variables.tts.get_volume())
     global_variables.radio_player.play_stream(URL)
-    return f"Could not find any station which matched the query. Playing a random radio station {station_name}."
+    return f"Playing the radio station {station_name}."
 
 def find_best_match(query, station_dict):
     # convert text numbers to real numbers

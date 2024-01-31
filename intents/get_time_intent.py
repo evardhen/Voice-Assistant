@@ -4,7 +4,7 @@ from langchain.tools import BaseTool
 
 class CustomGetTimeTool(BaseTool):
     name = "get_time"
-    description = "useful when you want to get the current time. The function takes no input parameters. Returns a string including the current time."
+    description = "useful when you want to get the current time. The function takes as input parameter the string \"today\". Returns a string including the current time."
 
     def _run(self, query: str) -> str:
         return get_time() + "\n\n"

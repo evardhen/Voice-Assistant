@@ -62,6 +62,10 @@ def spotify_player(song_title: Optional[str] = None, artist_name: Optional[str] 
             song_info = spotify_player.play_playlist(playlist_name)
             global_variables.spotify._is_playing = True
             return "Playing songs from the playlist " + playlist_name + "5\n"
+        if playlist_name == "null" and album_name == "null" and song_title == "null" and artist_name == "null":
+            song_info = spotify_player.play_hits_playlist("Feel Good Morning Mix")
+            global_variables.spotify._is_playing = True
+            return "Playing songs from the playlist " + playlist_name + "6\n"
     except Exception as e:
         return f"Error in spotify_intent: {e}"
 
@@ -188,6 +192,27 @@ class SpotifyPlayer:
         # Search for all playlists
         results = self.sp.search(q=playlist_name, limit=1, type="playlist")
         playlist_uri = results["playlists"]["items"][0]["uri"]
+        self.sp.shuffle(state=True, device_id=self.device_id)
+        self.sp.start_playback(device_id=self.device_id, context_uri=playlist_uri)
+        return results["playlists"]["items"][0]
+
+    def play_hits_playlist(self, playlist_name):            
+        # Search for all playlists
+        results = self.sp.search(q=playlist_name, limit=1, type="playlist")
+        playlist_uri = results["playlists"]["items"][0]["uri"]
+        self.sp.shuffle(state=True, device_id=self.device_id)
+        self.sp.start_playback(device_id=self.device_id, context_uri=playlist_uri)
+        return results["playlists"]["items"][0]
+
+    def play_hits_playlist(self, playlist_name):
+        # Search for all playlists
+        results = self.sp.search(q=playlist_name, limit=1, type="playlist")
+        if not results["playlists"]["items"]:
+            return f"No playlist found for {playlist_name}"
+
+        playlist_uri = results["playlists"]["items"][0]["uri"]
+        
+
         self.sp.shuffle(state=True, device_id=self.device_id)
         self.sp.start_playback(device_id=self.device_id, context_uri=playlist_uri)
         return results["playlists"]["items"][0]

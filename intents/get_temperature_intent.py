@@ -28,6 +28,7 @@ def get_temperature(day):
     response = requests.get(url)
 
     day = day.lower()
+    day = day.replace("next ", "")
     date_pattern_no_year = r'\d{2}\.\d{2}'
     dates_no_year = re.findall(date_pattern_no_year, day)
     if day == "today":

@@ -1,1 +1,2 @@
-0
+1
+Feedback: I encountered an issue while trying to create a playlist on Spotify. The assistant did not respond correctly.

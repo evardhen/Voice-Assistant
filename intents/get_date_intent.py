@@ -3,7 +3,7 @@ from langchain.tools import BaseTool
 
 class CustomGetDateTool(BaseTool):
     name = "get_date"
-    description = "useful when you want to get the current date or the current weekday of the assistant Luna. Returns a string including the current date and the weekday."
+    description = "useful when you want to get the current date or the current weekday of the assistant Luna. The function takes as input parameter the string \"placeholder\".  Returns a string including the current date and the weekday."
 
     def _run(self, query: str) -> str:
         return get_date() + "\n\n"
